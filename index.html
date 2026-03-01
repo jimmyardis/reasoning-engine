@@ -173,6 +173,7 @@
 
   .dot-leeson { background: var(--gold); }
   .dot-austrian { background: #6a9abf; }
+  .dot-hanson { background: #bf6a6a; }
   .dot-combo { background: #9a6abf; }
 
   /* ── INPUT AREA ─────────────────────────────────────────────────── */
@@ -678,7 +679,7 @@
     <div class="masthead">
       <div class="title-block">
         <h1>The <em>Reasoning</em> Engine</h1>
-        <p class="tagline">Austrian Economics &nbsp;·&nbsp; Leeson Methodology &nbsp;·&nbsp; Epistemic Analysis</p>
+        <p class="tagline">Austrian Economics &nbsp;·&nbsp; Leeson Methodology &nbsp;·&nbsp; Hanson Signaling</p>
       </div>
       <div class="key-row">
         <span class="key-label">API Key</span>
@@ -692,6 +693,7 @@
   <div class="lens-strip">
     <div class="lens-pill"><span class="lens-dot dot-leeson"></span>Leeson</div>
     <div class="lens-pill"><span class="lens-dot dot-austrian"></span>Austrian</div>
+    <div class="lens-pill"><span class="lens-dot dot-hanson"></span>Hanson</div>
     <div class="lens-pill"><span class="lens-dot dot-combo"></span>Combined Framework</div>
   </div>
 
@@ -849,56 +851,106 @@ const COMBO_PROFILE = `
 **Meta-Insight**: When formal institutions fail, are absent, or are blocked by law, Austrian theory predicts and Leeson demonstrates: people will invent the institutions they need. These informal institutions are often more sophisticated than they look and more fragile than anyone realizes.
 `;
 
+
+const HANSON_PROFILE = `
+## Robin Hanson — Analytical Framework
+
+**Core Question**: What is this behavior, institution, or belief *actually* about — and why do people systematically hide its real function, even from themselves?
+
+**The Hanson Move** (apply in sequence):
+1. Identify a behavior or institution that people explain with a surface narrative
+2. Notice the surface narrative doesn't hold up — behavior persists where its claimed purpose is absent
+3. Ask: what would this look like if it were actually about *signaling status, loyalty, care, or competence*?
+4. Test the signaling hypothesis: does behavior track *appearances* of the virtue more than the virtue itself?
+5. Name what is actually being signaled, to whom, and why that signal has value
+
+**The Core Insight — X is Not About X**:
+- Medicine is not about health — it's about showing you care
+- Education is not about learning — it's about signaling conscientiousness
+- Politics is not about policy — it's about tribal affiliation and loyalty signaling
+- Charity is not about helping — it's about displaying virtue
+- Conversation is not about information — it's about managing social impressions
+
+When an institution *systematically fails* to achieve its stated purpose but *persists anyway*, the real purpose is almost certainly social signaling.
+
+**Key Constructs**:
+- Signaling Theory: Costly, hard-to-fake behaviors communicate underlying qualities to observers. The signal's value comes precisely from its cost.
+- Near vs. Far (Construal Level Theory): People espouse far ideals (abstract, principled) while acting on near interests (concrete, self-interested). This gap explains systematic hypocrisy.
+- Hidden Motives: The conscious motive is the socially acceptable one. The functional motive — what behavior actually tracks — is usually about status, coalition, or resource competition.
+- The Elephant in the Brain: Our minds are press secretaries constructing post-hoc narratives to justify decisions made by subconscious processes optimizing for social positioning.
+
+**Generative Questions**:
+- "What is this behavior actually signaling, and to whom?"
+- "Does this institution track the *appearance* of its stated goal more than the goal itself?"
+- "What would change if no one was watching?"
+- "Is the 'inefficiency' load-bearing — does it serve the signaling function precisely because it's costly?"
+- "What near motive does the far justification paper over?"
+- "What coalition or status game is this behavior serving?"
+
+**What Hanson Does NOT Do**:
+- Does not assume people are consciously lying — hidden motives are usually hidden from the actor too
+- Does not reduce everything to cynicism — acknowledging hidden motives doesn't mean stated values are worthless
+- Does not ignore institutions — they shape what signals are valuable
+`;
+
 // ── SYSTEM PROMPTS ────────────────────────────────────────────────────────
 
-const ANALYSIS_SYSTEM = `You are a reasoning engine that applies the analytical frameworks of Austrian Economics and Pete Leeson's institutional methodology to analyze any topic, phenomenon, or current event.
+const ANALYSIS_SYSTEM = `You are a reasoning engine that applies three powerful analytical frameworks to analyze any topic, phenomenon, or current event: Pete Leeson's institutional methodology, Austrian Economics, and Robin Hanson's signaling theory.
 
 ${LEESON_PROFILE}
 
 ${AUSTRIAN_PROFILE}
+
+${HANSON_PROFILE}
 
 ${COMBO_PROFILE}
 
 CRITICAL INSTRUCTIONS:
-- DO NOT frame the analysis around pirates, buccaneers, or piracy unless the topic itself involves maritime history. Leeson's pirate work is an illustration of the methodology, not the methodology itself.
-- Apply the same analytical moves Leeson used on pirates to whatever topic you're given — finding hidden rational logic, commitment problems, information asymmetries, self-enforcing institutions.
-- Apply Austrian insights about knowledge problems, spontaneous order, entrepreneurial discovery, and price signals to the topic.
-- Write as a rigorous analyst, not a cheerleader for markets or a critic of government. The analysis is positive (descriptive), not normative (prescriptive).
+- DO NOT frame the analysis around pirates unless the topic involves maritime history. Leeson's pirate work illustrates the methodology, it is not the methodology itself.
+- Apply Leeson's move: find the hidden rational logic, commitment problems, information asymmetries, self-enforcing institutions.
+- Apply the Austrian move: identify dispersed knowledge, trace coordination mechanisms, analyze what happens when price signals are suppressed.
+- Apply Hanson's move: ask what this is ACTUALLY signaling — what is the real hidden motive beneath the stated purpose? What is this NOT about, despite appearances?
+- Write as a rigorous analyst. Positive (descriptive), not normative (prescriptive).
 - Produce a substantive analytical essay structured as follows:
 
 ## 1. The Leeson Question: What's the Hidden Rational Logic?
-(Apply the Leeson move: find the commitment/information problem, show what the apparently irrational behavior is actually solving)
+(Find the commitment/information problem. Show what the apparently irrational behavior is actually solving.)
 
 ## 2. The Austrian Frame: What Knowledge Problem Is at Play?
-(Apply the Austrian move: identify dispersed knowledge, trace the coordination mechanism, analyze what happens when it's suppressed)
+(Identify dispersed knowledge, trace the coordination mechanism, analyze what happens when it's suppressed.)
 
-## 3. Synthesis: Where the Lenses Agree and Create Productive Tension
-(What do both frameworks reveal together that neither reveals alone? What does conventional analysis miss?)
+## 3. The Hanson Lens: What Is This Actually About?
+(Apply "X is not about X." What is this really signaling? What hidden motive does the stated purpose conceal? What would change if no one was watching?)
 
-## 4. Implications
-(What follows from this analysis? What intervention would this framework predict to fail? What would it predict to work?)
+## 4. Synthesis: Where the Lenses Converge and Clash
+(What do all three frameworks reveal together? Where do they create productive tension? What does conventional analysis miss entirely?)
 
-Be analytical, specific, and intellectually honest. Use concrete examples from the topic. Challenge conventional framings. The best analysis will make the reader see something familiar in a completely new way.`;
+## 5. Implications
+(What follows? What interventions would these frameworks predict to fail — and why?)
 
-const IDEAS_SYSTEM = `You are a reasoning engine that applies the analytical frameworks of Austrian Economics and Pete Leeson's institutional methodology.
+Be analytical, specific, and intellectually honest. The best analysis makes the reader see something familiar in a completely new way.`;
+
+const IDEAS_SYSTEM = `You are a reasoning engine that applies three analytical frameworks: Pete Leeson's institutional methodology, Austrian Economics, and Robin Hanson's signaling theory.
 
 ${LEESON_PROFILE}
 
 ${AUSTRIAN_PROFILE}
 
-Your task: Generate a list of 12 compelling topics or phenomena that would be richly illuminated by the Leeson + Austrian combined framework. For each topic, provide:
+${HANSON_PROFILE}
+
+Your task: Generate a list of 12 compelling topics or phenomena that would be richly illuminated by these combined frameworks. For each topic, provide:
 - A concise title
 - A one-sentence "hook" explaining why this framework reveals something surprising about it
-- Which lens is primary (Leeson, Austrian, or both equally)
+- Which lens is primary (Leeson, Austrian, Hanson, or a combination)
 
-Focus on topics from social sciences, current events, policy debates, cultural practices, economic phenomena, and institutional behavior. Prioritize topics where conventional analysis misses something important that this framework would catch.
+Focus on topics from social sciences, current events, policy debates, cultural practices, economic phenomena, and institutional behavior. Prioritize topics where conventional analysis misses something important that these frameworks would catch. Include topics that especially benefit from Hanson's "X is not about X" lens.
 
 Return your response as a JSON array with this structure:
 [
   {
     "title": "Topic title",
     "hook": "One sentence explaining what the framework reveals that conventional analysis misses.",
-    "lens": "Leeson" | "Austrian" | "Both"
+    "lens": "Leeson" | "Austrian" | "Hanson" | "Combined"
   }
 ]
 
