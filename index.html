@@ -662,6 +662,294 @@
     color: var(--gold);
   }
 
+
+  /* ── INFOGRAPHIC SECTION ────────────────────────────────────────── */
+  .infographic-section {
+    display: none;
+    margin-top: 48px;
+    padding-top: 36px;
+    border-top: 1px solid var(--border);
+  }
+
+  .infographic-section.visible {
+    display: block;
+  }
+
+  .infographic-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .infographic-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .infographic-title {
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  /* ── 2x2 MATRIX ─────────────────────────────────────────────────── */
+  .matrix-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    margin: 0 auto;
+    max-width: 600px;
+  }
+
+  .matrix-y-label {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    writing-mode: vertical-lr;
+    transform: rotate(180deg);
+    text-align: center;
+    margin-right: 12px;
+    flex-shrink: 0;
+    height: 300px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .matrix-main {
+    display: flex;
+    gap: 0;
+    align-items: flex-start;
+  }
+
+  .matrix-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 2px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .matrix-cell {
+    background: var(--bg2);
+    padding: 20px 18px;
+    min-height: 130px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: background 0.15s;
+    position: relative;
+  }
+
+  .matrix-cell:hover {
+    background: var(--bg3);
+  }
+
+  .matrix-cell.highlight {
+    background: rgba(201, 168, 76, 0.08);
+    border: 1px solid var(--gold-dim);
+  }
+
+  .cell-position {
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .cell-title {
+    font-family: var(--serif);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .cell-desc {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-top: 2px;
+  }
+
+  .cell-example {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--gold-dim);
+    margin-top: auto;
+    padding-top: 8px;
+  }
+
+  .matrix-x-labels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin-top: 8px;
+  }
+
+  .matrix-x-label {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 4px;
+  }
+
+  .matrix-axis-title {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  /* ── SPECTRUM ────────────────────────────────────────────────────── */
+  .spectrum-wrap {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .spectrum-track {
+    position: relative;
+    height: 6px;
+    background: linear-gradient(to right, #3a5a7a, var(--gold));
+    border-radius: 3px;
+    margin: 24px 0 40px;
+  }
+
+  .spectrum-point {
+    position: absolute;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    top: -6px;
+  }
+
+  .spectrum-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--gold);
+    border: 2px solid var(--bg);
+    flex-shrink: 0;
+  }
+
+  .spectrum-point-label {
+    position: absolute;
+    top: 24px;
+    font-family: var(--serif);
+    font-size: 0.85rem;
+    color: var(--text);
+    white-space: nowrap;
+    transform: translateX(-50%);
+    text-align: center;
+    max-width: 120px;
+    white-space: normal;
+    line-height: 1.3;
+  }
+
+  .spectrum-ends {
+    display: flex;
+    justify-content: space-between;
+    margin-top: -20px;
+  }
+
+  .spectrum-end-label {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* ── COMPARISON TABLE ────────────────────────────────────────────── */
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .comparison-table th {
+    background: var(--bg3);
+    padding: 12px 16px;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold);
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .comparison-table th:first-child {
+    color: var(--text-muted);
+  }
+
+  .comparison-table td {
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    color: #ccc5b8;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  .comparison-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .comparison-table tr:hover td {
+    background: var(--bg2);
+  }
+
+  .comparison-table td:first-child {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--text);
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  /* ── INFOGRAPHIC LOADING ─────────────────────────────────────────── */
+  .infographic-loading {
+    display: none;
+    padding: 20px 0;
+    text-align: center;
+  }
+
+  .infographic-loading.visible {
+    display: block;
+  }
+
+  .infographic-loading p {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
   /* ── RESPONSIVE ─────────────────────────────────────────────────── */
   @media (max-width: 640px) {
     .masthead { flex-direction: column; }
@@ -756,6 +1044,19 @@
       <button class="save-btn" id="saveBtn">Save .md</button>
     </div>
     <div class="analysis-body" id="analysisBody"></div>
+  </div>
+
+
+  <!-- ── INFOGRAPHIC ── -->
+  <div class="infographic-loading" id="infographicLoading">
+    <p>Generating visual…</p>
+  </div>
+  <div class="infographic-section" id="infographicSection">
+    <div class="infographic-header">
+      <span class="infographic-label">Visual</span>
+      <span class="infographic-title" id="infographicTitle"></span>
+    </div>
+    <div id="infographicBody"></div>
   </div>
 
   <!-- ── FOOTER ── -->
@@ -1084,6 +1385,8 @@ runBtn.addEventListener('click', async () => {
   setLoading(true);
   showError(false);
   outputSection.classList.remove('visible');
+  infographicSection.classList.remove('visible');
+  infographicLoading.classList.remove('visible');
 
   try {
     if (currentMode === 'analysis') {
@@ -1122,6 +1425,11 @@ async function runAnalysis(topic, apiKey) {
   outputSection.classList.add('visible');
 
   outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Fire infographic generation async — doesn't block analysis display
+  if (currentDepth !== 'quick') {
+    generateInfographic(topic, response, apiKey);
+  }
 }
 
 // ── IDEAS MODE ────────────────────────────────────────────────────────────
@@ -1200,6 +1508,250 @@ async function callClaude(apiKey, system, userMessage, maxTokens = 4000) {
 
   const data = await res.json();
   return data.content?.[0]?.text || '';
+}
+
+
+// ── INFOGRAPHIC SYSTEM ────────────────────────────────────────────────────
+
+const INFOGRAPHIC_SYSTEM = `You are an analytical visualization expert. You are given an analysis text and must decide if a visual would add genuine insight — not decoration, but a diagram that makes a relationship or tension *click* that prose can't convey as sharply.
+
+Evaluate the analysis and choose ONE of these options:
+
+1. **2x2 matrix** — when the analysis reveals two independent axes that create four meaningfully distinct quadrants. Each quadrant should be genuinely different, not just "more or less" of the same thing.
+
+2. **spectrum** — when the analysis reveals cases/phenomena that fall along a single meaningful continuum with 3-5 named positions.
+
+3. **comparison_table** — when the analysis reveals 3-5 distinct items that differ across 3-4 meaningful dimensions (good for "these three frameworks say X about this phenomenon").
+
+4. **none** — when the analysis is primarily about a single linear argument, or when a visual would be forcing or decorative rather than genuinely illuminating.
+
+Return ONLY a JSON object. No other text. No markdown fences.
+
+For 2x2:
+{
+  "type": "2x2",
+  "title": "Short evocative title for the matrix",
+  "x_axis": "X axis label (left to right)",
+  "y_axis": "Y axis label (bottom to top)",
+  "x_low": "Low end of X label",
+  "x_high": "High end of X label",
+  "y_low": "Low end of Y label",
+  "y_high": "High end of Y label",
+  "cells": [
+    {"position": "top-left", "title": "Quadrant name", "desc": "1-2 sentence description", "example": "concrete example from topic", "highlight": false},
+    {"position": "top-right", "title": "Quadrant name", "desc": "1-2 sentence description", "example": "concrete example", "highlight": true},
+    {"position": "bottom-left", "title": "Quadrant name", "desc": "1-2 sentence description", "example": "concrete example", "highlight": false},
+    {"position": "bottom-right", "title": "Quadrant name", "desc": "1-2 sentence description", "example": "concrete example", "highlight": false}
+  ]
+}
+
+For spectrum:
+{
+  "type": "spectrum",
+  "title": "Short evocative title",
+  "axis_label": "What the spectrum measures",
+  "left_label": "Left end label",
+  "right_label": "Right end label",
+  "points": [
+    {"label": "Point name", "desc": "Brief description", "position": 0.1},
+    {"label": "Point name", "desc": "Brief description", "position": 0.5},
+    {"label": "Point name", "desc": "Brief description", "position": 0.85}
+  ]
+}
+
+For comparison_table:
+{
+  "type": "comparison_table",
+  "title": "Short evocative title",
+  "columns": ["Lens/Framework 1", "Lens/Framework 2", "Lens/Framework 3"],
+  "rows": [
+    {"dimension": "What it sees", "values": ["...", "...", "..."]},
+    {"dimension": "Key question", "values": ["...", "...", "..."]},
+    {"dimension": "Predicted failure", "values": ["...", "...", "..."]},
+    {"dimension": "What's load-bearing", "values": ["...", "...", "..."]}
+  ]
+}
+
+For none:
+{
+  "type": "none"
+}`;
+
+const infographicLoading = document.getElementById('infographicLoading');
+const infographicSection = document.getElementById('infographicSection');
+const infographicTitle = document.getElementById('infographicTitle');
+const infographicBody = document.getElementById('infographicBody');
+
+async function generateInfographic(topic, analysisText, apiKey) {
+  infographicLoading.classList.add('visible');
+  infographicSection.classList.remove('visible');
+
+  try {
+    const prompt = `Topic: "${topic}"\n\nAnalysis:\n${analysisText.slice(0, 3000)}\n\nGenerate a visualization JSON for this analysis.`;
+    const raw = await callClaude(apiKey, INFOGRAPHIC_SYSTEM, prompt, 1200);
+    const clean = raw.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    const data = JSON.parse(clean);
+
+    infographicLoading.classList.remove('visible');
+
+    if (data.type === 'none') return;
+
+    infographicTitle.textContent = data.title || '';
+    infographicBody.innerHTML = '';
+
+    if (data.type === '2x2') {
+      infographicBody.appendChild(render2x2(data));
+    } else if (data.type === 'spectrum') {
+      infographicBody.appendChild(renderSpectrum(data));
+    } else if (data.type === 'comparison_table') {
+      infographicBody.appendChild(renderComparisonTable(data));
+    }
+
+    infographicSection.classList.add('visible');
+  } catch (e) {
+    infographicLoading.classList.remove('visible');
+    // Silently skip — infographic is additive, not critical
+  }
+}
+
+function render2x2(data) {
+  const wrap = document.createElement('div');
+  wrap.className = 'matrix-wrap';
+
+  const mainRow = document.createElement('div');
+  mainRow.style.display = 'flex';
+  mainRow.style.gap = '0';
+  mainRow.style.alignItems = 'center';
+
+  // Y axis label
+  const yLabel = document.createElement('div');
+  yLabel.className = 'matrix-y-label';
+  yLabel.textContent = data.y_axis;
+  mainRow.appendChild(yLabel);
+
+  const rightCol = document.createElement('div');
+
+  // Grid
+  const grid = document.createElement('div');
+  grid.className = 'matrix-grid';
+
+  const order = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+  order.forEach(pos => {
+    const cell = data.cells.find(c => c.position === pos) || {};
+    const el = document.createElement('div');
+    el.className = 'matrix-cell' + (cell.highlight ? ' highlight' : '');
+    el.innerHTML = `
+      <span class="cell-position">${pos.replace('-', ' ')}</span>
+      <div class="cell-title">${escapeHtml(cell.title || '')}</div>
+      <div class="cell-desc">${escapeHtml(cell.desc || '')}</div>
+      ${cell.example ? `<div class="cell-example">e.g. ${escapeHtml(cell.example)}</div>` : ''}
+    `;
+    grid.appendChild(el);
+  });
+
+  rightCol.appendChild(grid);
+
+  // X axis labels
+  const xLabels = document.createElement('div');
+  xLabels.className = 'matrix-x-labels';
+  xLabels.innerHTML = `
+    <div class="matrix-x-label">${escapeHtml(data.x_low || '')}</div>
+    <div class="matrix-x-label">${escapeHtml(data.x_high || '')}</div>
+  `;
+  rightCol.appendChild(xLabels);
+
+  const xTitle = document.createElement('div');
+  xTitle.className = 'matrix-axis-title';
+  xTitle.textContent = data.x_axis;
+  rightCol.appendChild(xTitle);
+
+  mainRow.appendChild(rightCol);
+  wrap.appendChild(mainRow);
+
+  return wrap;
+}
+
+function renderSpectrum(data) {
+  const wrap = document.createElement('div');
+  wrap.className = 'spectrum-wrap';
+
+  const axisLabel = document.createElement('div');
+  axisLabel.style.fontFamily = 'var(--mono)';
+  axisLabel.style.fontSize = '0.65rem';
+  axisLabel.style.letterSpacing = '0.1em';
+  axisLabel.style.textTransform = 'uppercase';
+  axisLabel.style.color = 'var(--text-dim)';
+  axisLabel.style.marginBottom = '8px';
+  axisLabel.textContent = data.axis_label || '';
+  wrap.appendChild(axisLabel);
+
+  const track = document.createElement('div');
+  track.className = 'spectrum-track';
+
+  (data.points || []).forEach(pt => {
+    const point = document.createElement('div');
+    point.className = 'spectrum-point';
+    point.style.left = `${(pt.position || 0.5) * 100}%`;
+    point.innerHTML = `
+      <div class="spectrum-dot"></div>
+      <div class="spectrum-point-label">${escapeHtml(pt.label || '')}</div>
+    `;
+    track.appendChild(point);
+  });
+
+  wrap.appendChild(track);
+
+  // Extra spacing for labels
+  const spacer = document.createElement('div');
+  spacer.style.height = '80px';
+  wrap.appendChild(spacer);
+
+  const ends = document.createElement('div');
+  ends.className = 'spectrum-ends';
+  ends.innerHTML = `
+    <span class="spectrum-end-label">${escapeHtml(data.left_label || '')}</span>
+    <span class="spectrum-end-label">${escapeHtml(data.right_label || '')}</span>
+  `;
+  wrap.appendChild(ends);
+
+  return wrap;
+}
+
+function renderComparisonTable(data) {
+  const table = document.createElement('table');
+  table.className = 'comparison-table';
+
+  // Header
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  const emptyTh = document.createElement('th');
+  emptyTh.textContent = 'Dimension';
+  headerRow.appendChild(emptyTh);
+  (data.columns || []).forEach(col => {
+    const th = document.createElement('th');
+    th.textContent = col;
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  // Body
+  const tbody = document.createElement('tbody');
+  (data.rows || []).forEach(row => {
+    const tr = document.createElement('tr');
+    const dimTd = document.createElement('td');
+    dimTd.textContent = row.dimension || '';
+    tr.appendChild(dimTd);
+    (row.values || []).forEach(val => {
+      const td = document.createElement('td');
+      td.textContent = val;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+
+  return table;
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
