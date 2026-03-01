@@ -606,6 +606,61 @@
     text-align: right;
   }
 
+  /* ── DEPTH TOGGLE ───────────────────────────────────────────────── */
+  .depth-toggle {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .depth-btn {
+    background: transparent;
+    border: none;
+    padding: 8px 13px;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    border-right: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .depth-btn:last-child { border-right: none; }
+
+  .depth-btn.active {
+    background: var(--bg3);
+    color: var(--gold);
+  }
+
+  .depth-btn:hover:not(.active) {
+    background: var(--bg3);
+    color: var(--text);
+  }
+
+  /* ── SAVE BUTTON ────────────────────────────────────────────────── */
+  .save-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 5px 12px;
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .save-btn:hover {
+    border-color: var(--gold-dim);
+    color: var(--gold);
+  }
+
   /* ── RESPONSIVE ─────────────────────────────────────────────────── */
   @media (max-width: 640px) {
     .masthead { flex-direction: column; }
@@ -655,6 +710,11 @@
         <button class="mode-btn active" data-mode="analysis">Analysis</button>
         <button class="mode-btn" data-mode="ideas">Generate Ideas</button>
       </div>
+      <div class="depth-toggle" id="depthToggle">
+        <button class="depth-btn" data-depth="quick">Quick</button>
+        <button class="depth-btn active" data-depth="standard">Standard</button>
+        <button class="depth-btn" data-depth="deep">Deep</button>
+      </div>
       <button class="run-btn" id="runBtn" disabled>Run Analysis →</button>
     </div>
 
@@ -691,6 +751,7 @@
         <span class="output-badge" id="outputBadge">Analysis</span>
       </div>
       <button class="copy-btn" id="copyBtn">Copy</button>
+      <button class="save-btn" id="saveBtn">Save .md</button>
     </div>
     <div class="analysis-body" id="analysisBody"></div>
   </div>
@@ -846,7 +907,9 @@ Return ONLY the JSON array, no other text.`;
 // ── STATE ─────────────────────────────────────────────────────────────────
 
 let currentMode = 'analysis';
+let currentDepth = 'standard';
 let currentRawText = '';
+let currentTopic = '';
 
 // ── DOM REFS ──────────────────────────────────────────────────────────────
 
@@ -908,6 +971,8 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
     btn.classList.add('active');
     currentMode = btn.dataset.mode;
     runBtn.textContent = currentMode === 'analysis' ? 'Run Analysis →' : 'Generate Ideas →';
+    document.getElementById('depthToggle').style.opacity = currentMode === 'ideas' ? '0.3' : '1';
+    document.getElementById('depthToggle').style.pointerEvents = currentMode === 'ideas' ? 'none' : 'auto';
   });
 });
 
@@ -921,6 +986,16 @@ document.querySelectorAll('.example-chip').forEach(chip => {
   });
 });
 
+// ── DEPTH TOGGLE ──────────────────────────────────────────────────────────
+
+document.querySelectorAll('.depth-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.depth-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentDepth = btn.dataset.depth;
+  });
+});
+
 // ── COPY BUTTON ───────────────────────────────────────────────────────────
 
 copyBtn.addEventListener('click', () => {
@@ -928,6 +1003,21 @@ copyBtn.addEventListener('click', () => {
     copyBtn.textContent = 'Copied!';
     setTimeout(() => copyBtn.textContent = 'Copy', 2000);
   });
+});
+
+// ── SAVE BUTTON ───────────────────────────────────────────────────────────
+
+const saveBtn = document.getElementById('saveBtn');
+saveBtn.addEventListener('click', () => {
+  if (!currentRawText) return;
+  const filename = (currentTopic || 'analysis').toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 60) + '.md';
+  const blob = new Blob([currentRawText], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 });
 
 // ── MAIN RUN FUNCTION ─────────────────────────────────────────────────────
@@ -958,12 +1048,24 @@ runBtn.addEventListener('click', async () => {
 // ── ANALYSIS MODE ─────────────────────────────────────────────────────────
 
 async function runAnalysis(topic, apiKey) {
-  const response = await callClaude(apiKey, ANALYSIS_SYSTEM, `Analyze this topic using the Leeson + Austrian framework:\n\n${topic}`);
+  currentTopic = topic;
+
+  const depthInstructions = {
+    quick: `Write a concise quick-take — 3 tight paragraphs total, one each for the Leeson question, the Austrian frame, and synthesis. No headers. Under 400 words. Be sharp.`,
+    standard: `Write a full analytical essay with the 4-section structure (Leeson Question, Austrian Frame, Synthesis, Implications). 800-1200 words with headers.`,
+    deep: `Write a comprehensive deep analysis with the 4-section structure. Go deep — sub-questions, historical parallels, edge cases, second-order effects. Use subheadings within sections. 1800-2500 words.`,
+  };
+
+  const depthLabel = { quick: 'Quick Take', standard: 'Analysis', deep: 'Deep Analysis' };
+  const prompt = `Analyze this topic using the Leeson + Austrian framework:\n\n${topic}\n\nDepth: ${depthInstructions[currentDepth]}`;
+  const maxTokens = { quick: 800, standard: 3000, deep: 5000 };
+
+  const response = await callClaude(apiKey, ANALYSIS_SYSTEM, prompt, maxTokens[currentDepth]);
   currentRawText = response;
 
   setLoading(false);
   outputTopic.textContent = `"${topic}"`;
-  outputBadge.textContent = 'Analysis';
+  outputBadge.textContent = depthLabel[currentDepth];
   analysisBody.innerHTML = marked.parse(response);
   outputSection.classList.add('visible');
 
@@ -1022,7 +1124,7 @@ async function runIdeas(apiKey) {
 
 // ── API CALL ──────────────────────────────────────────────────────────────
 
-async function callClaude(apiKey, system, userMessage) {
+async function callClaude(apiKey, system, userMessage, maxTokens = 4000) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -1033,7 +1135,7 @@ async function callClaude(apiKey, system, userMessage) {
     },
     body: JSON.stringify({
       model: 'claude-opus-4-6',
-      max_tokens: 4000,
+      max_tokens: maxTokens,
       system,
       messages: [{ role: 'user', content: userMessage }],
     }),
