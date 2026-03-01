@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Reasoning Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  :root {
+    --bg: #0f0e0c;
+    --bg2: #161412;
+    --bg3: #1e1b17;
+    --border: #2e2a24;
+    --text: #e8e0d0;
+    --text-muted: #8a8070;
+    --text-dim: #5a5448;
+    --gold: #c9a84c;
+    --gold-dim: #7a6530;
+    --gold-bright: #e8c56a;
+    --red-accent: #9a4a3a;
+    --mono: 'DM Mono', monospace;
+    --serif: 'Cormorant Garamond', serif;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  /* ── LAYOUT ─────────────────────────────────────────────────────── */
+  .shell {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  /* ── HEADER ─────────────────────────────────────────────────────── */
+  header {
+    padding: 52px 0 36px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+
+  .masthead {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .title-block h1 {
+    font-family: var(--serif);
+    font-size: 2.6rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    color: var(--text);
+  }
+
+  .title-block h1 em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .title-block .tagline {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 10px;
+  }
+
+  /* ── API KEY ────────────────────────────────────────────────────── */
+  .key-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 9px 14px;
+    border-radius: 4px;
+    min-width: 300px;
+    flex-shrink: 0;
+  }
+
+  .key-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .key-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--gold);
+    width: 100%;
+    letter-spacing: 0.03em;
+  }
+
+  .key-input::placeholder {
+    color: var(--text-dim);
+  }
+
+  .key-status {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+
+  .key-status.valid { background: #5a9a6a; }
+
+  /* ── LENS PILLS ─────────────────────────────────────────────────── */
+  .lens-strip {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .lens-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: var(--bg2);
+  }
+
+  .lens-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+  }
+
+  .dot-leeson { background: var(--gold); }
+  .dot-austrian { background: #6a9abf; }
+  .dot-combo { background: #9a6abf; }
+
+  /* ── INPUT AREA ─────────────────────────────────────────────────── */
+  .input-section {
+    margin-bottom: 32px;
+  }
+
+  .input-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .topic-input {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px 18px;
+    font-family: var(--serif);
+    font-size: 1.2rem;
+    color: var(--text);
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+    min-height: 90px;
+    line-height: 1.5;
+  }
+
+  .topic-input::placeholder {
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  .topic-input:focus {
+    border-color: var(--gold-dim);
+  }
+
+  /* ── CONTROL ROW ────────────────────────────────────────────────── */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+
+  .mode-toggle {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .mode-btn {
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    border-right: 1px solid var(--border);
+  }
+
+  .mode-btn:last-child { border-right: none; }
+
+  .mode-btn.active {
+    background: var(--bg3);
+    color: var(--gold);
+  }
+
+  .mode-btn:hover:not(.active) {
+    background: var(--bg3);
+    color: var(--text);
+  }
+
+  .run-btn {
+    background: var(--gold);
+    color: var(--bg);
+    border: none;
+    padding: 9px 28px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-left: auto;
+  }
+
+  .run-btn:hover {
+    background: var(--gold-bright);
+  }
+
+  .run-btn:disabled {
+    background: var(--gold-dim);
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  /* ── EXAMPLE TOPICS ─────────────────────────────────────────────── */
+  .examples-row {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .examples-label {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .example-chip {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 3px 10px;
+    font-family: var(--sans);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .example-chip:hover {
+    border-color: var(--gold-dim);
+    color: var(--gold);
+    background: var(--bg2);
+  }
+
+  /* ── DIVIDER ────────────────────────────────────────────────────── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 32px 0;
+  }
+
+  /* ── OUTPUT AREA ────────────────────────────────────────────────── */
+  .output-section {
+    min-height: 200px;
+    display: none;
+  }
+
+  .output-section.visible {
+    display: block;
+  }
+
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .output-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .output-topic {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+  }
+
+  .output-badge {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    background: rgba(201, 168, 76, 0.1);
+    padding: 3px 8px;
+    border-radius: 2px;
+    border: 1px solid var(--gold-dim);
+  }
+
+  .copy-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 5px 12px;
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .copy-btn:hover {
+    border-color: var(--gold-dim);
+    color: var(--gold);
+  }
+
+  /* ── MARKDOWN OUTPUT ────────────────────────────────────────────── */
+  .analysis-body {
+    line-height: 1.8;
+  }
+
+  .analysis-body h1 {
+    font-family: var(--serif);
+    font-size: 1.8rem;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.2;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+  }
+
+  .analysis-body h2 {
+    font-family: var(--serif);
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: var(--gold);
+    margin-top: 40px;
+    margin-bottom: 14px;
+    font-style: italic;
+  }
+
+  .analysis-body h3 {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-top: 28px;
+    margin-bottom: 10px;
+  }
+
+  .analysis-body p {
+    color: #ccc5b8;
+    margin-bottom: 16px;
+    font-size: 0.96rem;
+  }
+
+  .analysis-body strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .analysis-body em {
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  .analysis-body blockquote {
+    border-left: 2px solid var(--gold-dim);
+    padding-left: 18px;
+    margin: 20px 0;
+    color: var(--text-muted);
+    font-style: italic;
+    font-family: var(--serif);
+    font-size: 1.05rem;
+  }
+
+  .analysis-body ul, .analysis-body ol {
+    padding-left: 22px;
+    margin-bottom: 16px;
+    color: #ccc5b8;
+  }
+
+  .analysis-body li {
+    margin-bottom: 6px;
+    font-size: 0.96rem;
+  }
+
+  .analysis-body hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 32px 0;
+  }
+
+  .analysis-body code {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    background: var(--bg3);
+    padding: 1px 5px;
+    border-radius: 2px;
+    color: var(--gold);
+  }
+
+  /* ── IDEAS OUTPUT ───────────────────────────────────────────────── */
+  .ideas-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .idea-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .idea-card:hover {
+    border-color: var(--gold-dim);
+    background: var(--bg3);
+  }
+
+  .idea-card:hover .idea-title {
+    color: var(--gold);
+  }
+
+  .idea-title {
+    font-family: var(--serif);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 6px;
+    transition: color 0.15s;
+  }
+
+  .idea-hook {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .idea-lens {
+    display: inline-block;
+    margin-top: 8px;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    background: var(--bg);
+    padding: 2px 6px;
+    border-radius: 2px;
+  }
+
+  /* ── LOADING ────────────────────────────────────────────────────── */
+  .loading-state {
+    display: none;
+    padding: 48px 0;
+    text-align: center;
+  }
+
+  .loading-state.visible {
+    display: block;
+  }
+
+  .loading-glyph {
+    font-family: var(--serif);
+    font-size: 2rem;
+    color: var(--gold-dim);
+    animation: pulse 2s ease-in-out infinite;
+    display: block;
+    margin-bottom: 16px;
+  }
+
+  .loading-text {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+
+  /* ── ERROR ──────────────────────────────────────────────────────── */
+  .error-state {
+    display: none;
+    padding: 20px;
+    background: rgba(154, 74, 58, 0.1);
+    border: 1px solid var(--red-accent);
+    border-radius: 4px;
+    margin-top: 20px;
+  }
+
+  .error-state.visible { display: block; }
+
+  .error-state p {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: #c87060;
+    line-height: 1.6;
+  }
+
+  /* ── FOOTER ─────────────────────────────────────────────────────── */
+  footer {
+    padding: 48px 0 40px;
+    border-top: 1px solid var(--border);
+    margin-top: 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: gap;
+  }
+
+  .footer-mark {
+    font-family: var(--serif);
+    font-size: 0.95rem;
+    font-style: italic;
+    color: var(--text-dim);
+  }
+
+  .footer-note {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    text-align: right;
+  }
+
+  /* ── RESPONSIVE ─────────────────────────────────────────────────── */
+  @media (max-width: 640px) {
+    .masthead { flex-direction: column; }
+    .key-row { min-width: unset; width: 100%; }
+    .ideas-grid { grid-template-columns: 1fr; }
+    .title-block h1 { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ── HEADER ── -->
+  <header>
+    <div class="masthead">
+      <div class="title-block">
+        <h1>The <em>Reasoning</em> Engine</h1>
+        <p class="tagline">Austrian Economics &nbsp;·&nbsp; Leeson Methodology &nbsp;·&nbsp; Epistemic Analysis</p>
+      </div>
+      <div class="key-row">
+        <span class="key-label">API Key</span>
+        <input type="password" class="key-input" id="apiKey" placeholder="sk-ant-..." autocomplete="off">
+        <div class="key-status" id="keyStatus"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── LENS STRIP ── -->
+  <div class="lens-strip">
+    <div class="lens-pill"><span class="lens-dot dot-leeson"></span>Leeson</div>
+    <div class="lens-pill"><span class="lens-dot dot-austrian"></span>Austrian</div>
+    <div class="lens-pill"><span class="lens-dot dot-combo"></span>Combined Framework</div>
+  </div>
+
+  <!-- ── INPUT ── -->
+  <div class="input-section">
+    <label class="input-label" for="topic">Topic or phenomenon to analyze</label>
+    <textarea
+      class="topic-input"
+      id="topic"
+      rows="3"
+      placeholder="Enter any social, political, economic, or cultural phenomenon…"
+    ></textarea>
+
+    <div class="controls">
+      <div class="mode-toggle">
+        <button class="mode-btn active" data-mode="analysis">Analysis</button>
+        <button class="mode-btn" data-mode="ideas">Generate Ideas</button>
+      </div>
+      <button class="run-btn" id="runBtn" disabled>Run Analysis →</button>
+    </div>
+
+    <div class="examples-row">
+      <span class="examples-label">Examples:</span>
+      <button class="example-chip">HOA rules</button>
+      <button class="example-chip">gig economy</button>
+      <button class="example-chip">healthcare pricing</button>
+      <button class="example-chip">tipping culture</button>
+      <button class="example-chip">zoning laws</button>
+      <button class="example-chip">criminal gang codes</button>
+      <button class="example-chip">social media moderation</button>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ── LOADING ── -->
+  <div class="loading-state" id="loadingState">
+    <span class="loading-glyph">⊕</span>
+    <p class="loading-text">Applying the framework…</p>
+  </div>
+
+  <!-- ── ERROR ── -->
+  <div class="error-state" id="errorState">
+    <p id="errorText"></p>
+  </div>
+
+  <!-- ── OUTPUT ── -->
+  <div class="output-section" id="outputSection">
+    <div class="output-header">
+      <div class="output-meta">
+        <span class="output-topic" id="outputTopic"></span>
+        <span class="output-badge" id="outputBadge">Analysis</span>
+      </div>
+      <button class="copy-btn" id="copyBtn">Copy</button>
+    </div>
+    <div class="analysis-body" id="analysisBody"></div>
+  </div>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <span class="footer-mark">The Reasoning Engine</span>
+    <span class="footer-note">Powered by Claude · Leeson + Austrian frameworks</span>
+  </footer>
+
+</div>
+
+<script>
+// ── PRINCIPLES PROFILES ───────────────────────────────────────────────────
+
+const LEESON_PROFILE = `
+## Pete Leeson — Analytical Framework
+
+**Core Question**: What is the hidden rational logic behind this seemingly irrational, bizarre, or chaotic phenomenon?
+
+**The Leeson Move** (apply in sequence):
+1. Identify a phenomenon that looks irrational, chaotic, cruel, or bizarre from the outside
+2. Ask: what problem were the actors trying to solve?
+3. Identify the constraints: no state, no courts, no third-party enforcement, information asymmetry, credible commitment problems
+4. Reframe: show how the "bizarre" behavior is an elegant solution to that underlying problem
+5. Derive the implicit institutional logic: what rules, signals, or mechanisms are embedded in the behavior?
+
+**Key Analytical Constructs**:
+- Commitment Problems: How do actors credibly bind themselves to promises when no external enforcer exists?
+- Information Asymmetries: Who knows what, and how does that shape behavior?
+- Self-Enforcing Institutions: How do rules persist without a police force?
+- Rational Superstition: Sometimes irrational-looking beliefs serve rational functions
+
+**Generative Questions**:
+- "What problem is this behavior/institution/rule actually solving?"
+- "Who benefits from the opacity or weirdness? Follow that."
+- "Is the 'inefficiency' here actually load-bearing? What would collapse without it?"
+- "What commitment problem does this ritual/rule/practice solve?"
+- "What information does this signal convey, and to whom?"
+
+**What Leeson Does NOT Do**:
+- Does not assume dysfunction just because something looks messy
+- Does not invoke culture or tradition as explanation (that's where analysis begins, not ends)
+- Does not assume state = order, no state = chaos
+- Does not moralize — the analysis is positive, not normative
+`;
+
+const AUSTRIAN_PROFILE = `
+## Austrian Economics — Analytical Framework
+
+**Core Question**: What does the price signal know that the planner doesn't — and what happens when that signal is suppressed, distorted, or replaced?
+
+**The Austrian Move** (apply in sequence):
+1. Identify the coordination problem: how are actors with different, dispersed, local knowledge supposed to align their actions?
+2. Ask: what information is distributed across millions of actors that no single mind can possess?
+3. Find the mechanism: what price, convention, institution, or emergent signal aggregates and communicates that dispersed knowledge?
+4. Trace the intervention: what happens when that mechanism is interfered with, replaced by central direction, or suppressed?
+5. Identify second and third-order effects: unintended consequences, malinvestment, misallocation, loss of discovery
+
+**Key Constructs**:
+- The Knowledge Problem (Hayek): No central authority can possess the dispersed, local, tacit knowledge distributed across all actors. Prices solve this by aggregating information no one person holds.
+- Spontaneous Order (Hayek): Complex, beneficial patterns emerge bottom-up through simple rules — not through conscious design.
+- Entrepreneurial Discovery (Kirzner): Profit opportunities act as signals that alert entrepreneurs to unmet needs and misallocated resources.
+- Capital Heterogeneity: Resources are not fungible. Malinvestment creates real structural costs that can't be simply reversed.
+- Calculation Problem (Mises): Without market prices, rational economic calculation is impossible.
+
+**Generative Questions**:
+- "What local, tacit, dispersed knowledge is this policy ignoring?"
+- "What coordination mechanism is being suppressed or replaced?"
+- "Is this a market failure, or a regulatory failure that looks like a market failure?"
+- "What are the second and third-order effects of distorting this signal?"
+- "What would the entrepreneurial discovery process look like if allowed to operate?"
+
+**Core Insight**: The information required to make centralized decisions well doesn't exist in centralized form. It's scattered across billions of minds, embedded in local context, tacit, constantly changing. Any time you suppress or replace the price mechanism, you lose information you didn't know you needed.
+`;
+
+const COMBO_PROFILE = `
+## Combined Framework: Austrian + Leeson
+
+**Why They Belong Together**:
+- Austrian gives you the theory of why order emerges without central design
+- Leeson gives you the methodology for finding that order in places no one thought to look
+
+**The Combined Move**:
+1. Austrian setup: Identify the knowledge problem or coordination problem at the heart of the phenomenon. What information is dispersed? What mechanism should be aggregating it?
+2. Leeson lens: Zoom in on the weird, the informal, the seemingly irrational. Ask: what commitment problem or information problem is this apparently irrational practice solving?
+3. Synthesis: The Austrian framework predicts that some mechanism will emerge to coordinate dispersed knowledge. Leeson's method reveals what that mechanism actually looks like — often counterintuitive, often disguised.
+4. Implication: The "bizarre" institution is usually doing load-bearing work. Remove it without understanding its function and something worse fills the void.
+
+**Signature Combined Questions**:
+- "What coordination problem does the price signal want to solve here — and what informal institution has emerged to solve it in the price signal's absence?"
+- "If we banned/regulated this informal institution out of existence, what would we actually be destroying?"
+- "What information does this seemingly irrational practice aggregate and communicate?"
+
+**Meta-Insight**: When formal institutions fail, are absent, or are blocked by law, Austrian theory predicts and Leeson demonstrates: people will invent the institutions they need. These informal institutions are often more sophisticated than they look and more fragile than anyone realizes.
+`;
+
+// ── SYSTEM PROMPTS ────────────────────────────────────────────────────────
+
+const ANALYSIS_SYSTEM = `You are a reasoning engine that applies the analytical frameworks of Austrian Economics and Pete Leeson's institutional methodology to analyze any topic, phenomenon, or current event.
+
+${LEESON_PROFILE}
+
+${AUSTRIAN_PROFILE}
+
+${COMBO_PROFILE}
+
+CRITICAL INSTRUCTIONS:
+- DO NOT frame the analysis around pirates, buccaneers, or piracy unless the topic itself involves maritime history. Leeson's pirate work is an illustration of the methodology, not the methodology itself.
+- Apply the same analytical moves Leeson used on pirates to whatever topic you're given — finding hidden rational logic, commitment problems, information asymmetries, self-enforcing institutions.
+- Apply Austrian insights about knowledge problems, spontaneous order, entrepreneurial discovery, and price signals to the topic.
+- Write as a rigorous analyst, not a cheerleader for markets or a critic of government. The analysis is positive (descriptive), not normative (prescriptive).
+- Produce a substantive analytical essay structured as follows:
+
+## 1. The Leeson Question: What's the Hidden Rational Logic?
+(Apply the Leeson move: find the commitment/information problem, show what the apparently irrational behavior is actually solving)
+
+## 2. The Austrian Frame: What Knowledge Problem Is at Play?
+(Apply the Austrian move: identify dispersed knowledge, trace the coordination mechanism, analyze what happens when it's suppressed)
+
+## 3. Synthesis: Where the Lenses Agree and Create Productive Tension
+(What do both frameworks reveal together that neither reveals alone? What does conventional analysis miss?)
+
+## 4. Implications
+(What follows from this analysis? What intervention would this framework predict to fail? What would it predict to work?)
+
+Be analytical, specific, and intellectually honest. Use concrete examples from the topic. Challenge conventional framings. The best analysis will make the reader see something familiar in a completely new way.`;
+
+const IDEAS_SYSTEM = `You are a reasoning engine that applies the analytical frameworks of Austrian Economics and Pete Leeson's institutional methodology.
+
+${LEESON_PROFILE}
+
+${AUSTRIAN_PROFILE}
+
+Your task: Generate a list of 12 compelling topics or phenomena that would be richly illuminated by the Leeson + Austrian combined framework. For each topic, provide:
+- A concise title
+- A one-sentence "hook" explaining why this framework reveals something surprising about it
+- Which lens is primary (Leeson, Austrian, or both equally)
+
+Focus on topics from social sciences, current events, policy debates, cultural practices, economic phenomena, and institutional behavior. Prioritize topics where conventional analysis misses something important that this framework would catch.
+
+Return your response as a JSON array with this structure:
+[
+  {
+    "title": "Topic title",
+    "hook": "One sentence explaining what the framework reveals that conventional analysis misses.",
+    "lens": "Leeson" | "Austrian" | "Both"
+  }
+]
+
+Return ONLY the JSON array, no other text.`;
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+
+let currentMode = 'analysis';
+let currentRawText = '';
+
+// ── DOM REFS ──────────────────────────────────────────────────────────────
+
+const apiKeyInput = document.getElementById('apiKey');
+const keyStatus = document.getElementById('keyStatus');
+const topicInput = document.getElementById('topic');
+const runBtn = document.getElementById('runBtn');
+const loadingState = document.getElementById('loadingState');
+const errorState = document.getElementById('errorState');
+const errorText = document.getElementById('errorText');
+const outputSection = document.getElementById('outputSection');
+const outputTopic = document.getElementById('outputTopic');
+const outputBadge = document.getElementById('outputBadge');
+const analysisBody = document.getElementById('analysisBody');
+const copyBtn = document.getElementById('copyBtn');
+
+// ── API KEY HANDLING ──────────────────────────────────────────────────────
+
+// Load saved key
+const savedKey = localStorage.getItem('reasoning_engine_key');
+if (savedKey) {
+  apiKeyInput.value = savedKey;
+  updateKeyStatus(savedKey);
+}
+
+apiKeyInput.addEventListener('input', () => {
+  const key = apiKeyInput.value.trim();
+  updateKeyStatus(key);
+  if (key) localStorage.setItem('reasoning_engine_key', key);
+  updateRunButton();
+});
+
+function updateKeyStatus(key) {
+  const valid = key.startsWith('sk-ant-') && key.length > 20;
+  keyStatus.className = 'key-status' + (valid ? ' valid' : '');
+}
+
+function getApiKey() {
+  return apiKeyInput.value.trim();
+}
+
+// ── RUN BUTTON STATE ──────────────────────────────────────────────────────
+
+function updateRunButton() {
+  const hasKey = getApiKey().length > 10;
+  const hasTopic = topicInput.value.trim().length > 0;
+  runBtn.disabled = !(hasKey && hasTopic);
+}
+
+topicInput.addEventListener('input', updateRunButton);
+apiKeyInput.addEventListener('input', updateRunButton);
+updateRunButton();
+
+// ── MODE TOGGLE ───────────────────────────────────────────────────────────
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMode = btn.dataset.mode;
+    runBtn.textContent = currentMode === 'analysis' ? 'Run Analysis →' : 'Generate Ideas →';
+  });
+});
+
+// ── EXAMPLE CHIPS ─────────────────────────────────────────────────────────
+
+document.querySelectorAll('.example-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    topicInput.value = chip.textContent;
+    updateRunButton();
+    topicInput.focus();
+  });
+});
+
+// ── COPY BUTTON ───────────────────────────────────────────────────────────
+
+copyBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(currentRawText).then(() => {
+    copyBtn.textContent = 'Copied!';
+    setTimeout(() => copyBtn.textContent = 'Copy', 2000);
+  });
+});
+
+// ── MAIN RUN FUNCTION ─────────────────────────────────────────────────────
+
+runBtn.addEventListener('click', async () => {
+  const topic = topicInput.value.trim();
+  const apiKey = getApiKey();
+
+  if (!topic || !apiKey) return;
+
+  // Reset state
+  setLoading(true);
+  showError(false);
+  outputSection.classList.remove('visible');
+
+  try {
+    if (currentMode === 'analysis') {
+      await runAnalysis(topic, apiKey);
+    } else {
+      await runIdeas(apiKey);
+    }
+  } catch (err) {
+    setLoading(false);
+    showError(true, err.message || 'An error occurred. Check your API key and try again.');
+  }
+});
+
+// ── ANALYSIS MODE ─────────────────────────────────────────────────────────
+
+async function runAnalysis(topic, apiKey) {
+  const response = await callClaude(apiKey, ANALYSIS_SYSTEM, `Analyze this topic using the Leeson + Austrian framework:\n\n${topic}`);
+  currentRawText = response;
+
+  setLoading(false);
+  outputTopic.textContent = `"${topic}"`;
+  outputBadge.textContent = 'Analysis';
+  analysisBody.innerHTML = marked.parse(response);
+  outputSection.classList.add('visible');
+
+  outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── IDEAS MODE ────────────────────────────────────────────────────────────
+
+async function runIdeas(apiKey) {
+  const response = await callClaude(apiKey, IDEAS_SYSTEM, 'Generate 12 compelling topics for analysis using the Leeson + Austrian framework. Return only the JSON array.');
+
+  let ideas;
+  try {
+    // Strip markdown code fences if present
+    const clean = response.replace(/```json\n?|```\n?/g, '').trim();
+    ideas = JSON.parse(clean);
+  } catch (e) {
+    throw new Error('Failed to parse ideas response. Try again.');
+  }
+
+  currentRawText = ideas.map(i => `${i.title}\n${i.hook}`).join('\n\n');
+
+  setLoading(false);
+  outputTopic.textContent = 'Topic suggestions';
+  outputBadge.textContent = 'Ideas';
+
+  const grid = document.createElement('div');
+  grid.className = 'ideas-grid';
+
+  ideas.forEach(idea => {
+    const card = document.createElement('div');
+    card.className = 'idea-card';
+    card.innerHTML = `
+      <div class="idea-title">${escapeHtml(idea.title)}</div>
+      <div class="idea-hook">${escapeHtml(idea.hook)}</div>
+      <span class="idea-lens">${escapeHtml(idea.lens)}</span>
+    `;
+    card.addEventListener('click', () => {
+      topicInput.value = idea.title;
+      currentMode = 'analysis';
+      document.querySelectorAll('.mode-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.mode === 'analysis');
+      });
+      runBtn.textContent = 'Run Analysis →';
+      updateRunButton();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    grid.appendChild(card);
+  });
+
+  analysisBody.innerHTML = '';
+  analysisBody.appendChild(grid);
+  outputSection.classList.add('visible');
+  outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── API CALL ──────────────────────────────────────────────────────────────
+
+async function callClaude(apiKey, system, userMessage) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-opus-4-6',
+      max_tokens: 4000,
+      system,
+      messages: [{ role: 'user', content: userMessage }],
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `API error ${res.status}`);
+  }
+
+  const data = await res.json();
+  return data.content?.[0]?.text || '';
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────
+
+function setLoading(on) {
+  loadingState.classList.toggle('visible', on);
+  runBtn.disabled = on;
+}
+
+function showError(on, msg = '') {
+  errorState.classList.toggle('visible', on);
+  if (msg) errorText.textContent = msg;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>
