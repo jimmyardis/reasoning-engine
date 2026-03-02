@@ -174,6 +174,7 @@
   .dot-leeson { background: var(--gold); }
   .dot-austrian { background: #6a9abf; }
   .dot-hanson { background: #bf6a6a; }
+  .dot-taleb { background: #6abf9a; }
   .dot-combo { background: #9a6abf; }
 
   /* ── INPUT AREA ─────────────────────────────────────────────────── */
@@ -967,7 +968,7 @@
     <div class="masthead">
       <div class="title-block">
         <h1>The <em>Reasoning</em> Engine</h1>
-        <p class="tagline">Austrian Economics &nbsp;·&nbsp; Leeson Methodology &nbsp;·&nbsp; Hanson Signaling</p>
+        <p class="tagline">Leeson &nbsp;·&nbsp; Austrian &nbsp;·&nbsp; Hanson &nbsp;·&nbsp; Taleb</p>
       </div>
       <div class="key-row">
         <span class="key-label">API Key</span>
@@ -977,12 +978,13 @@
     </div>
   </header>
 
-  <!-- ── LENS STRIP ── -->
+  <!-- ── LENS TOGGLES ── -->
   <div class="lens-strip">
-    <div class="lens-pill"><span class="lens-dot dot-leeson"></span>Leeson</div>
-    <div class="lens-pill"><span class="lens-dot dot-austrian"></span>Austrian</div>
-    <div class="lens-pill"><span class="lens-dot dot-hanson"></span>Hanson</div>
-    <div class="lens-pill"><span class="lens-dot dot-combo"></span>Combined Framework</div>
+    <span class="lens-strip-label">Lenses</span>
+    <button class="lens-pill active" data-lens="leeson"><span class="lens-dot dot-leeson"></span>Leeson</button>
+    <button class="lens-pill active" data-lens="austrian"><span class="lens-dot dot-austrian"></span>Austrian</button>
+    <button class="lens-pill active" data-lens="hanson"><span class="lens-dot dot-hanson"></span>Hanson</button>
+    <button class="lens-pill active" data-lens="taleb"><span class="lens-dot dot-taleb"></span>Taleb</button>
   </div>
 
   <!-- ── INPUT ── -->
@@ -1194,6 +1196,37 @@ When an institution *systematically fails* to achieve its stated purpose but *pe
 - Does not ignore institutions — they shape what signals are valuable
 `;
 
+
+const TALEB_PROFILE = `
+## Nassim Taleb — Analytical Framework
+
+**Core Question**: Is this system gaining strength from disorder — or hiding fragility beneath apparent stability? And who bears the consequences when it breaks?
+
+**The Taleb Move** (apply in sequence):
+1. Classify the system: fragile (breaks under stress), robust (survives unchanged), or antifragile (gains from disorder)?
+2. Find the hidden fragility: what looks stable or optimized but is secretly accumulating unseen risk?
+3. Check skin in the game: who makes decisions? Who bears consequences? If they're different people, fragility is being offloaded.
+4. Apply via negativa: what could be *removed* to make this stronger? Is the "help" iatrogenic — causing the harm it claims to prevent?
+5. Lindy check: has this survived a long time? If yes, it encodes resilience. If it's new and untested, discount theoretical arguments for it.
+
+**Core Constructs**:
+- Antifragility: things that *gain* from volatility and disorder. Modern institutions engineered for efficiency are systematically fragile — we confuse "no visible harm yet" with "safe."
+- Black Swans: rare, high-impact, unpredictable events that our models exclude by design. The variance doesn't disappear — it compresses into catastrophic tail events.
+- Skin in the Game: those who make decisions must bear consequences. Without it: risk is offloaded, moral hazard festers, bad advice compounds. The interventionista gives advice with no exposure to being wrong.
+- Via Negativa: in complex systems, we know more reliably what NOT to do than what to do. Subtraction is more reliable than addition. Iatrogenics: the harm done by the healer.
+- Lindy Effect: past survival is evidence of future survival for non-perishable things. Ancient heuristics encode survival information that untested modern interventions lack.
+- Ergodicity: what's true for a population on average is NOT true for an individual over time. You cannot average away ruin.
+
+**Generative Questions**:
+- "Is this fragile, robust, or antifragile? Where is the hidden variance accumulating?"
+- "Who has skin in the game — and who is offloading risk onto others?"
+- "Is this intervention iatrogenic? Could the cure be worse than the disease?"
+- "What does via negativa look like? What could be *removed* to make this stronger?"
+- "What does the Lindy effect say? Has time-tested practice been replaced by untested theory?"
+- "Is the apparent stability real, or variance being compressed into future catastrophic release?"
+- "Are ensemble averages being applied to individual irreversible situations (ergodicity error)?"
+`;
+
 // ── SYSTEM PROMPTS ────────────────────────────────────────────────────────
 
 const ANALYSIS_SYSTEM = `You are a reasoning engine that applies three powerful analytical frameworks to analyze any topic, phenomenon, or current event: Pete Leeson's institutional methodology, Austrian Economics, and Robin Hanson's signaling theory.
@@ -1231,7 +1264,7 @@ CRITICAL INSTRUCTIONS:
 
 Be analytical, specific, and intellectually honest. The best analysis makes the reader see something familiar in a completely new way.`;
 
-const IDEAS_SYSTEM = `You are a reasoning engine that applies three analytical frameworks: Pete Leeson's institutional methodology, Austrian Economics, and Robin Hanson's signaling theory.
+const IDEAS_SYSTEM = `You are a reasoning engine that applies four analytical frameworks: Pete Leeson's institutional methodology, Austrian Economics, Robin Hanson's signaling theory, and Nassim Taleb's antifragility and skin-in-the-game framework.
 
 ${LEESON_PROFILE}
 
@@ -1239,12 +1272,14 @@ ${AUSTRIAN_PROFILE}
 
 ${HANSON_PROFILE}
 
+${TALEB_PROFILE}
+
 Your task: Generate a list of 12 compelling topics or phenomena that would be richly illuminated by these combined frameworks. For each topic, provide:
 - A concise title
 - A one-sentence "hook" explaining why this framework reveals something surprising about it
 - Which lens is primary (Leeson, Austrian, Hanson, or a combination)
 
-Focus on topics from social sciences, current events, policy debates, cultural practices, economic phenomena, and institutional behavior. Prioritize topics where conventional analysis misses something important that these frameworks would catch. Include topics that especially benefit from Hanson's "X is not about X" lens.
+Focus on topics from social sciences, current events, policy debates, cultural practices, economic phenomena, and institutional behavior. Prioritize topics where conventional analysis misses something important that these frameworks would catch. Include topics that especially benefit from Hanson's "X is not about X" lens or Taleb's fragility/skin-in-the-game lens.
 
 Return your response as a JSON array with this structure:
 [
@@ -1405,17 +1440,18 @@ runBtn.addEventListener('click', async () => {
 async function runAnalysis(topic, apiKey) {
   currentTopic = topic;
 
+  const numLenses = activeLenses.size;
   const depthInstructions = {
-    quick: `Write a concise quick-take — 3 tight paragraphs total, one each for the Leeson question, the Austrian frame, and synthesis. No headers. Under 400 words. Be sharp.`,
-    standard: `Write a full analytical essay with the 4-section structure (Leeson Question, Austrian Frame, Synthesis, Implications). 800-1200 words with headers.`,
-    deep: `Write a comprehensive deep analysis with the 4-section structure. Go deep — sub-questions, historical parallels, edge cases, second-order effects. Use subheadings within sections. 1800-2500 words.`,
+    quick: `Write a concise quick-take — one sharp paragraph per active lens, no headers. Under 400 words. Be sharp and specific.`,
+    standard: `Write a full analytical essay using the section structure in your instructions. 800-1200 words with headers.`,
+    deep: `Write a comprehensive deep analysis using the section structure. Go deep — sub-questions, historical parallels, edge cases, second-order effects. Use subheadings within sections. ${numLenses > 2 ? '2000-3000' : '1800-2500'} words.`,
   };
 
   const depthLabel = { quick: 'Quick Take', standard: 'Analysis', deep: 'Deep Analysis' };
   const prompt = `Analyze this topic using the Leeson + Austrian framework:\n\n${topic}\n\nDepth: ${depthInstructions[currentDepth]}`;
   const maxTokens = { quick: 800, standard: 3000, deep: 5000 };
 
-  const response = await callClaude(apiKey, ANALYSIS_SYSTEM, prompt, maxTokens[currentDepth]);
+  const response = await callClaude(apiKey, buildSystemPrompt(), prompt, maxTokens[currentDepth]);
   currentRawText = response;
 
   setLoading(false);
@@ -1752,6 +1788,84 @@ function renderComparisonTable(data) {
   table.appendChild(tbody);
 
   return table;
+}
+
+
+// ── LENS TOGGLES ─────────────────────────────────────────────────────────
+
+const activeLenses = new Set(['leeson', 'austrian', 'hanson', 'taleb']);
+
+document.querySelectorAll('.lens-pill[data-lens]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const lens = btn.dataset.lens;
+    if (activeLenses.has(lens)) {
+      // Don't allow deactivating last lens
+      if (activeLenses.size === 1) return;
+      activeLenses.delete(lens);
+      btn.classList.remove('active');
+    } else {
+      activeLenses.add(lens);
+      btn.classList.add('active');
+    }
+  });
+});
+
+function buildSystemPrompt() {
+  const profiles = [];
+  const sections = [];
+  const lensNames = [];
+
+  if (activeLenses.has('leeson')) {
+    profiles.push(LEESON_PROFILE);
+    sections.push(`## The Leeson Question: What's the Hidden Rational Logic?
+(Find the commitment/information problem. Show what the apparently irrational behavior is actually solving.)`);
+    lensNames.push('Pete Leeson');
+  }
+  if (activeLenses.has('austrian')) {
+    profiles.push(AUSTRIAN_PROFILE);
+    sections.push(`## The Austrian Frame: What Knowledge Problem Is at Play?
+(Identify dispersed knowledge, trace the coordination mechanism, analyze what happens when it's suppressed.)`);
+    lensNames.push('Austrian Economics');
+  }
+  if (activeLenses.has('hanson')) {
+    profiles.push(HANSON_PROFILE);
+    sections.push(`## The Hanson Lens: What Is This Actually About?
+(Apply "X is not about X." What is this really signaling? What hidden motive does the stated purpose conceal?)`);
+    lensNames.push('Robin Hanson');
+  }
+  if (activeLenses.has('taleb')) {
+    profiles.push(TALEB_PROFILE);
+    sections.push(`## The Taleb Stress Test: Where Is the Hidden Fragility?
+(Classify: fragile, robust, or antifragile? Who has skin in the game? Is the intervention iatrogenic? What does via negativa reveal?)`);
+    lensNames.push('Nassim Taleb');
+  }
+
+  const profileBlock = profiles.join('\n\n');
+  const hasMultiple = lensNames.length > 1;
+
+  const synthesisSection = hasMultiple ? `\n## Synthesis: Where the Lenses Converge and Clash
+(What do the frameworks reveal together? Where do they create productive tension? What does conventional analysis miss?)
+
+## Implications
+(What follows? What interventions would these frameworks predict to fail — and why?)` : `\n## Implications
+(What follows from this analysis? What would this framework predict to fail — and why?)`;
+
+  const sectionBlock = sections.join('\n\n') + synthesisSection;
+  const lensLabel = lensNames.length === 1 ? lensNames[0] : lensNames.join(' + ');
+
+  return `You are a reasoning engine applying the following analytical framework(s) to analyze any topic: ${lensLabel}.
+
+${profileBlock}
+
+CRITICAL INSTRUCTIONS:
+- DO NOT frame analysis around pirates unless the topic involves maritime history.
+- Apply each active framework's signature analytical move to the topic.
+- Write as a rigorous analyst. Positive (descriptive), not normative (prescriptive).
+- Produce a substantive analytical essay with these sections:
+
+${sectionBlock}
+
+Be analytical, specific, and intellectually honest. The best analysis makes the reader see something familiar in a completely new way.`;
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
