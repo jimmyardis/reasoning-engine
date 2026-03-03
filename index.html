@@ -1005,9 +1005,8 @@
         <p class="tagline">Leeson &nbsp;·&nbsp; Austrian &nbsp;·&nbsp; Hanson &nbsp;·&nbsp; Taleb</p>
       </div>
       <div class="key-row">
-        <span class="key-label">API Key</span>
-        <input type="password" class="key-input" id="apiKey" placeholder="sk-ant-..." autocomplete="off">
-        <div class="key-status" id="keyStatus"></div>
+        <span class="key-label">Proxy</span>
+        <span class="key-status valid" id="keyStatus">&#9679; Connected</span>
       </div>
     </div>
   </header>
@@ -1335,7 +1334,7 @@ let currentTopic = '';
 
 // ── DOM REFS ──────────────────────────────────────────────────────────────
 
-const apiKeyInput = document.getElementById('apiKey');
+const apiKeyInput = { value: '', addEventListener: () => {} };
 const keyStatus = document.getElementById('keyStatus');
 const topicInput = document.getElementById('topic');
 const runBtn = document.getElementById('runBtn');
@@ -1357,32 +1356,18 @@ if (savedKey) {
   updateKeyStatus(savedKey);
 }
 
-apiKeyInput.addEventListener('input', () => {
-  const key = apiKeyInput.value.trim();
-  updateKeyStatus(key);
-  if (key) localStorage.setItem('reasoning_engine_key', key);
-  updateRunButton();
-});
+// apiKey input listener removed
 
-function updateKeyStatus(key) {
-  const valid = key.startsWith('sk-ant-') && key.length > 20;
-  keyStatus.className = 'key-status' + (valid ? ' valid' : '');
-}
-
-function getApiKey() {
-  return apiKeyInput.value.trim();
-}
 
 // ── RUN BUTTON STATE ──────────────────────────────────────────────────────
 
 function updateRunButton() {
-  const hasKey = getApiKey().length > 10;
   const hasTopic = topicInput.value.trim().length > 0;
-  runBtn.disabled = !(hasKey && hasTopic);
+  runBtn.disabled = !hasTopic;
 }
 
 topicInput.addEventListener('input', updateRunButton);
-apiKeyInput.addEventListener('input', updateRunButton);
+// apiKey listener removed
 updateRunButton();
 
 // ── MODE TOGGLE ───────────────────────────────────────────────────────────
@@ -1446,9 +1431,8 @@ saveBtn.addEventListener('click', () => {
 
 runBtn.addEventListener('click', async () => {
   const topic = topicInput.value.trim();
-  const apiKey = getApiKey();
-
-  if (!topic || !apiKey) return;
+  if (!topic) return;
+  const apiKey = null; // handled by proxy
 
   // Reset state
   setLoading(true);
@@ -1554,17 +1538,16 @@ async function runIdeas(apiKey) {
 
 // ── API CALL ──────────────────────────────────────────────────────────────
 
+const PROXY_URL = 'https://reasoning-engine-proxy.jimmy-ardis.workers.dev';
+
 async function callClaude(apiKey, system, userMessage, maxTokens = 4000) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch(PROXY_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
     },
     body: JSON.stringify({
-      model: 'claude-opus-4-6',
+      model: 'claude-sonnet-4-6',
       max_tokens: maxTokens,
       system,
       messages: [{ role: 'user', content: userMessage }],
