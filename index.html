@@ -1381,13 +1381,11 @@ const analysisBody = document.getElementById('analysisBody');
 const copyBtn = document.getElementById('copyBtn');
 
 // ── API KEY HANDLING ──────────────────────────────────────────────────────
+function updateKeyStatus() {} // stubbed - handled by proxy
+
 
 // Load saved key
-const savedKey = localStorage.getItem('reasoning_engine_key');
-if (savedKey) {
-  apiKeyInput.value = savedKey;
-  updateKeyStatus(savedKey);
-}
+// API key handled server-side via Cloudflare Worker proxy
 
 // apiKey input listener removed
 
