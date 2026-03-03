@@ -209,6 +209,7 @@
   .dot-austrian { background: #6a9abf; }
   .dot-hanson { background: #bf6a6a; }
   .dot-taleb { background: #6abf9a; }
+  .dot-jiang { background: #bf9a6a; }
   .dot-combo { background: #9a6abf; }
 
   /* ── INPUT AREA ─────────────────────────────────────────────────── */
@@ -1002,7 +1003,7 @@
     <div class="masthead">
       <div class="title-block">
         <h1>The <em>Reasoning</em> Engine</h1>
-        <p class="tagline">Leeson &nbsp;·&nbsp; Austrian &nbsp;·&nbsp; Hanson &nbsp;·&nbsp; Taleb</p>
+        <p class="tagline">Leeson &nbsp;·&nbsp; Austrian &nbsp;·&nbsp; Hanson &nbsp;·&nbsp; Taleb &nbsp;·&nbsp; Jiang</p>
       </div>
       <div class="key-row">
         <span class="key-label">Proxy</span>
@@ -1018,6 +1019,7 @@
     <button class="lens-pill active" data-lens="austrian"><span class="lens-dot dot-austrian"></span>Austrian</button>
     <button class="lens-pill active" data-lens="hanson"><span class="lens-dot dot-hanson"></span>Hanson</button>
     <button class="lens-pill active" data-lens="taleb"><span class="lens-dot dot-taleb"></span>Taleb</button>
+    <button class="lens-pill active" data-lens="jiang"><span class="lens-dot dot-jiang"></span>Jiang</button>
   </div>
 
   <!-- ── INPUT ── -->
@@ -1260,6 +1262,37 @@ const TALEB_PROFILE = `
 - "Are ensemble averages being applied to individual irreversible situations (ergodicity error)?"
 `;
 
+
+const JIANG_PROFILE = `
+## Jiang Xueqin — Predictive History Framework
+
+**Core Question**: Where is this phenomenon located in the civilizational cycle — and what does the historical pattern say happens next?
+
+**The Scale Distinction**: Jiang operates at civilizational scale — centuries, not news cycles; phases, not administrations. Where other frameworks analyze institutions or behaviors, Jiang asks what phase of the civilizational arc this pattern belongs to.
+
+**The Jiang Move** (apply in sequence):
+1. Identify the phase: where is this society/institution in the cycle? Rising (coherent narrative, sacrifice), mature (prosperity, complacency), or declining (spiritual exhaustion, elite failure, decadence)?
+2. Find the structural historical analogue — same constraints, same actor incentives, same probable outcome
+3. Apply game theory: where do rational actor interests converge on a trap — collective catastrophe nobody intended?
+4. Identify the narrative vacuum: what binding story has collapsed, and what is filling it?
+5. Project the pattern: what does the structural tendency predict?
+
+**Core Constructs**:
+- Civilizational Cycles: societies follow recognizable arcs of emergence, ascent, maturity, and decline. Decline symptoms: over-urbanization, demographic collapse, extreme inequality, proxy warfare, decadence, hubris preventing adaptation. Key insight: civilizations in decline cannot see their own decline from inside.
+- The Narrative/Spiritual Vacuum: civilizations require binding transcendent narratives. When the founding narrative collapses, the vacuum will be filled — often by something more dangerous. Late-civilization revival is frenetic and destructive, not constructive.
+- Game-Theoretic Traps: the most dangerous situations are where all actors behave rationally and their rational choices combine to produce collective catastrophe. The Iran Trap: Iran, Israel, and Trump all benefit from U.S. invasion — so all push toward it, serving none of their long-term interests. Template: Athens/Sicily, WWI.
+- Elite Overproduction and Failure: mature civilizations produce more would-be elites than the system can absorb. Existing elites optimize for personal survival over institutional function. Institutions exist for elite benefit, not social function.
+- Chain Reaction Dynamics: history's great catastrophes come from chain reactions — each escalation makes the next more probable until the system has momentum of its own.
+
+**Generative Questions**:
+- "What phase of the civilizational cycle does this belong to — and what typically happens next?"
+- "What is the binding narrative here — and is it intact, fraying, or collapsed?"
+- "Who are the actors, what are their rational self-interests, and where do those interests converge on a trap?"
+- "What is the structural historical analogue — same constraints, same incentives, same probable outcome?"
+- "Is this elite behavior oriented toward civilizational function or elite self-preservation?"
+- "What chain reactions does this make more probable downstream?"
+`;
+
 // ── SYSTEM PROMPTS ────────────────────────────────────────────────────────
 
 const ANALYSIS_SYSTEM = `You are a reasoning engine that applies three powerful analytical frameworks to analyze any topic, phenomenon, or current event: Pete Leeson's institutional methodology, Austrian Economics, and Robin Hanson's signaling theory.
@@ -1297,7 +1330,7 @@ CRITICAL INSTRUCTIONS:
 
 Be analytical, specific, and intellectually honest. The best analysis makes the reader see something familiar in a completely new way.`;
 
-const IDEAS_SYSTEM = `You are a reasoning engine that applies four analytical frameworks: Pete Leeson's institutional methodology, Austrian Economics, Robin Hanson's signaling theory, and Nassim Taleb's antifragility and skin-in-the-game framework.
+const IDEAS_SYSTEM = `You are a reasoning engine that applies five analytical frameworks: Pete Leeson's institutional methodology, Austrian Economics, Robin Hanson's signaling theory, Nassim Taleb's antifragility framework, and Jiang Xueqin's Predictive History (civilizational cycles and game-theoretic trap analysis).
 
 ${LEESON_PROFILE}
 
@@ -1312,7 +1345,7 @@ Your task: Generate a list of 12 compelling topics or phenomena that would be ri
 - A one-sentence "hook" explaining why this framework reveals something surprising about it
 - Which lens is primary (Leeson, Austrian, Hanson, or a combination)
 
-Focus on topics from social sciences, current events, policy debates, cultural practices, economic phenomena, and institutional behavior. Prioritize topics where conventional analysis misses something important that these frameworks would catch. Include topics that especially benefit from Hanson's "X is not about X" lens or Taleb's fragility/skin-in-the-game lens.
+Focus on topics from social sciences, current events, policy debates, cultural practices, economic phenomena, and institutional behavior. Prioritize topics where conventional analysis misses something important that these frameworks would catch. Include topics that benefit from any lens — especially Hanson's 'X is not about X', Taleb's fragility/skin-in-the-game, or Jiang's civilizational cycle and game-theoretic trap analysis.
 
 Return your response as a JSON array with this structure:
 [
@@ -1810,7 +1843,7 @@ function renderComparisonTable(data) {
 
 // ── LENS TOGGLES ─────────────────────────────────────────────────────────
 
-const activeLenses = new Set(['leeson', 'austrian', 'hanson', 'taleb']);
+const activeLenses = new Set(['leeson', 'austrian', 'hanson', 'taleb', 'jiang']);
 
 document.querySelectorAll('.lens-pill[data-lens]').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -1855,6 +1888,12 @@ function buildSystemPrompt() {
     sections.push(`## The Taleb Stress Test: Where Is the Hidden Fragility?
 (Classify: fragile, robust, or antifragile? Who has skin in the game? Is the intervention iatrogenic? What does via negativa reveal?)`);
     lensNames.push('Nassim Taleb');
+  }
+  if (activeLenses.has('jiang')) {
+    profiles.push(JIANG_PROFILE);
+    sections.push(`## The Jiang Lens: Civilizational Phase and the Trap Structure
+(What phase of the cycle is this? What is the historical structural analogue? Where do rational actor interests converge on a trap? What narrative vacuum is at play?)`);
+    lensNames.push('Jiang Xueqin');
   }
 
   const profileBlock = profiles.join('\n\n');
