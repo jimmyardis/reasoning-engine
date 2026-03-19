@@ -1764,18 +1764,28 @@ async function runIdeas(apiKey) {
 const PROXY_URL = 'https://reasoning-engine-proxy.jimmy-ardis.workers.dev';
 
 async function callClaude(apiKey, system, userMessage, maxTokens = 4000) {
-  const res = await fetch(PROXY_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: maxTokens,
-      system,
-      messages: [{ role: 'user', content: userMessage }],
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 55000); // 55s timeout
+
+  let res;
+  try {
+    res = await fetch(PROXY_URL, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: maxTokens,
+        system,
+        messages: [{ role: 'user', content: userMessage }],
+      }),
+    });
+  } catch (e) {
+    clearTimeout(timeout);
+    if (e.name === 'AbortError') throw new Error('Request timed out — try fewer lenses or Quick depth.');
+    throw e;
+  }
+  clearTimeout(timeout);
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
@@ -2039,7 +2049,6 @@ document.querySelectorAll('.lens-pill[data-lens]').forEach(btn => {
   btn.addEventListener('click', () => {
     const lens = btn.dataset.lens;
     if (activeLenses.has(lens)) {
-      // Don't allow deactivating last lens
       if (activeLenses.size === 1) return;
       activeLenses.delete(lens);
       btn.classList.remove('active');
@@ -2047,6 +2056,9 @@ document.querySelectorAll('.lens-pill[data-lens]').forEach(btn => {
       activeLenses.add(lens);
       btn.classList.add('active');
     }
+    // Show warning when many lenses active
+    const warn = document.getElementById('lensWarning');
+    if (warn) warn.style.display = activeLenses.size >= 5 ? 'block' : 'none';
   });
 });
 
@@ -2054,6 +2066,8 @@ function buildSystemPrompt() {
   const profiles = [];
   const sections = [];
   const lensNames = [];
+  // When many lenses active, use condensed profiles to keep prompt size manageable
+  const useCondensed = activeLenses.size >= 4;
 
   if (activeLenses.has('leeson')) {
     profiles.push(LEESON_PROFILE);
