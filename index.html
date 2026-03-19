@@ -6,7 +6,157 @@
 <title>The Reasoning Engine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js">
+// ── CONTENT GENERATOR ────────────────────────────────────────────────────
+
+const CONTENT_SYSTEM = `You are a sharp content strategist who distills dense intellectual analysis into punchy, shareable short-form content. Find the single most surprising, counterintuitive insight and make it irresistible. Never use: "delve into", "game-changer", "paradigm shift", "unpack", "in today's world". No hashtags.`;
+
+let lastAnalysisTopic = '';
+let lastAnalysisText = '';
+let activeContentFormat = 'linkedin';
+
+const contentGenBtn = document.getElementById('contentGenBtn');
+const contentSection = document.getElementById('contentSection');
+const contentLoading = document.getElementById('contentLoading');
+const contentPanels = document.getElementById('contentPanels');
+const contentActions = document.getElementById('contentActions');
+const contentCopyBtn = document.getElementById('contentCopyBtn');
+
+// Tab switching
+document.querySelectorAll('.content-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    activeContentFormat = tab.dataset.format;
+    document.querySelectorAll('.content-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.content-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + activeContentFormat).classList.add('active');
+  });
+});
+
+contentCopyBtn.addEventListener('click', () => {
+  const text = document.getElementById('panel-' + activeContentFormat).innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    contentCopyBtn.textContent = 'Copied!';
+    setTimeout(() => contentCopyBtn.textContent = 'Copy', 2000);
+  });
+});
+
+contentGenBtn.addEventListener('click', async () => {
+  if (!lastAnalysisText) return;
+  contentSection.classList.add('visible');
+  contentSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  contentLoading.style.display = 'block';
+  contentPanels.style.display = 'none';
+  contentActions.style.display = 'none';
+  ['linkedin','thread','hook'].forEach(f => { document.getElementById('panel-' + f).innerHTML = ''; });
+
+  const [li, th, hk] = await Promise.all([
+    genFormat(lastAnalysisTopic, lastAnalysisText, 'linkedin'),
+    genFormat(lastAnalysisTopic, lastAnalysisText, 'thread'),
+    genFormat(lastAnalysisTopic, lastAnalysisText, 'hook'),
+  ]);
+
+  renderLinkedIn(li);
+  renderThread(th);
+  renderHook(hk);
+
+  contentLoading.style.display = 'none';
+  contentPanels.style.display = 'block';
+  contentActions.style.display = 'block';
+});
+
+async function genFormat(topic, analysis, format) {
+  const excerpt = analysis.slice(0, 3000);
+  const prompts = {
+    linkedin: `Write a LinkedIn post (250-350 words) based on this analysis of "${topic}".
+
+Structure:
+- Opening line that stops the scroll — bold counterintuitive claim (not "I've been thinking about...")
+- 2-3 short paragraphs unpacking the insight with one concrete example
+- Closing line that reframes how the reader sees something going forward
+
+Tone: intellectually confident, not academic. Like a smart friend who read something fascinating.
+
+ANALYSIS:
+${excerpt}`,
+    thread: `Write an X/Twitter thread of 5-7 tweets based on this analysis of "${topic}".
+
+Format each tweet exactly as:
+[N/total] Tweet text
+
+Rules: Tweet 1 is the hook — bold claim. Each tweet standalone but pulls to next. Max 270 chars each. Last tweet = sharpest insight.
+
+ANALYSIS:
+${excerpt}`,
+    hook: `Write a newsletter hook based on this analysis of "${topic}".
+
+Format with these exact labeled sections:
+HOOK: (2-3 sentences that create tension or reveal something surprising)
+BRIDGE: (2-3 sentences connecting the hook to why it matters now)
+TEASE: (1 sentence on what they'll understand by the end)
+
+ANALYSIS:
+${excerpt}`,
+  };
+  try {
+    return await callClaude(null, CONTENT_SYSTEM, prompts[format], 1000);
+  } catch(e) {
+    return 'Error generating content.';
+  }
+}
+
+function renderLinkedIn(text) {
+  const el = document.createElement('div');
+  el.style.whiteSpace = 'pre-wrap';
+  el.textContent = text;
+  document.getElementById('panel-linkedin').appendChild(el);
+}
+
+function renderThread(text) {
+  const panel = document.getElementById('panel-thread');
+  const lines = text.split('\n').filter(l => l.trim());
+  let tweet = null;
+  lines.forEach(line => {
+    if (/^\[\d+\/\d+\]/.test(line.trim())) {
+      tweet = document.createElement('div');
+      tweet.className = 'thread-tweet';
+      const num = document.createElement('div');
+      num.className = 'tweet-num';
+      num.textContent = 'Tweet ' + (line.match(/\d+/) || [''])[0];
+      const txt = document.createElement('div');
+      txt.textContent = line.replace(/^\[\d+\/\d+\]\s*/, '').trim();
+      tweet.appendChild(num);
+      tweet.appendChild(txt);
+      panel.appendChild(tweet);
+    } else if (tweet && line.trim()) {
+      tweet.querySelector('div:last-child').textContent += ' ' + line.trim();
+    }
+  });
+  if (!panel.children.length) { panel.style.whiteSpace = 'pre-wrap'; panel.textContent = text; }
+}
+
+function renderHook(text) {
+  const panel = document.getElementById('panel-hook');
+  const parts = [['HOOK','hook-text'],['BRIDGE','hook-preview'],['TEASE','hook-preview']];
+  let found = false;
+  parts.forEach(([key, cls]) => {
+    const m = text.match(new RegExp(key + '[:\s]+([\s\S]*?)(?=BRIDGE:|TEASE:|$)', 'i'));
+    if (m && m[1].trim()) {
+      found = true;
+      const lbl = document.createElement('div');
+      lbl.className = 'hook-label';
+      lbl.textContent = key.charAt(0) + key.slice(1).toLowerCase();
+      const txt = document.createElement('div');
+      txt.className = cls;
+      txt.textContent = m[1].trim();
+      panel.appendChild(lbl);
+      panel.appendChild(txt);
+    }
+  });
+  if (!found) { panel.style.whiteSpace = 'pre-wrap'; panel.textContent = text; }
+}
+
+</script>
 <style>
   :root {
     --bg: #0f0e0c;
@@ -210,6 +360,7 @@
   .dot-hanson { background: #bf6a6a; }
   .dot-taleb { background: #6abf9a; }
   .dot-jiang { background: #bf9a6a; }
+  .dot-dalio { background: #7a8fbf; }
   .dot-combo { background: #9a6abf; }
 
   /* ── INPUT AREA ─────────────────────────────────────────────────── */
@@ -1003,7 +1154,7 @@
     <div class="masthead">
       <div class="title-block">
         <h1>The <em>Reasoning</em> Engine</h1>
-        <p class="tagline">Leeson &nbsp;·&nbsp; Austrian &nbsp;·&nbsp; Hanson &nbsp;·&nbsp; Taleb &nbsp;·&nbsp; Jiang</p>
+        <p class="tagline">Leeson &nbsp;·&nbsp; Austrian &nbsp;·&nbsp; Hanson &nbsp;·&nbsp; Taleb &nbsp;·&nbsp; Jiang &nbsp;·&nbsp; Dalio</p>
       </div>
       <div class="key-row">
         <span class="key-label">Proxy</span>
@@ -1020,6 +1171,7 @@
     <button class="lens-pill active" data-lens="hanson"><span class="lens-dot dot-hanson"></span>Hanson</button>
     <button class="lens-pill active" data-lens="taleb"><span class="lens-dot dot-taleb"></span>Taleb</button>
     <button class="lens-pill active" data-lens="jiang"><span class="lens-dot dot-jiang"></span>Jiang</button>
+    <button class="lens-pill active" data-lens="dalio"><span class="lens-dot dot-dalio"></span>Dalio</button>
   </div>
 
   <!-- ── INPUT ── -->
@@ -1293,6 +1445,38 @@ const JIANG_PROFILE = `
 - "What chain reactions does this make more probable downstream?"
 `;
 
+
+const DALIO_PROFILE = `
+## Ray Dalio — Principles Framework
+
+**Core Question**: What is the underlying machine at work here — what are its repeating parts, how do they interact, and where in the cycle is this system right now?
+
+**The Dalio Premise**: All complex systems are machines with identifiable parts and repeating mechanics. History doesn't repeat exactly, but the mechanics repeat almost exactly. If you know the machine, you can read its current state and project its trajectory.
+
+**The Dalio Move** (apply in sequence):
+1. Identify the machine: what are the key parts, drivers, and feedback loops?
+2. Locate the cycle: where is this system in its natural cycle — early, mid, late, or transitional?
+3. Find the template: what historical situation is structurally most similar? What did the machine do then?
+4. Identify the levers: who has the policy levers, what can they actually do, what are the hard constraints?
+5. Project the likely path: given the mechanics and the phase, what sequence of events is most probable?
+
+**Core Constructs**:
+- The Economic Machine (three forces): Productivity growth (slow, steady baseline) + Short-term debt cycle (~5-8 years: credit → boom → inflation → tightening → recession → repeat) + Long-term debt cycle (~75-100 years: accumulation → saturation → deleveraging → reset). The long-term cycle is the dominant force at major turning points and is almost universally misread because it's so rare.
+- Beautiful vs. Ugly Deleveraging: When debt is too high, deleveraging is inevitable. Beautiful balances austerity + debt restructuring + wealth redistribution + money printing so nominal growth exceeds interest rates. Get it wrong in either direction — too much austerity or too much printing — and you get depression or hyperinflation.
+- Paradigm Shifts: Every decade, the dominant paradigm becomes overdone and reverses. Those who adapted to the old paradigm get crushed. Identify what is unsustainable, visualize how the shift will transpire, position accordingly.
+- The Changing World Order: 250-year cycles of empire rise and decline driven by eight determinants: education, competitiveness, innovation, trade, military, financial center status, reserve currency status, and rule of law. The US is late in its cycle; China is the rising challenger. Template: British decline, Dutch Empire before that.
+- Internal/External Conflict: Rising inequality → populism → internal conflict → weakened response to external challengers. Once internal conflict dominates, institutional function degrades and foreign policy coherence collapses.
+
+**Generative Questions**:
+- "What is the machine here — what are its repeating parts and feedback loops?"
+- "Where in the cycle is this — early, mid, late, or transitional?"
+- "What is the historical template — when has this machine been in this configuration before?"
+- "What are the policy levers, and are they being used well or poorly relative to the phase?"
+- "What is unsustainable here, and how will it stop being sustained?"
+- "Is this a short-cycle or long-cycle phenomenon? Are people misreading one for the other?"
+- "What does beautiful resolution look like vs. ugly resolution?"
+`;
+
 // ── SYSTEM PROMPTS ────────────────────────────────────────────────────────
 
 const ANALYSIS_SYSTEM = `You are a reasoning engine that applies three powerful analytical frameworks to analyze any topic, phenomenon, or current event: Pete Leeson's institutional methodology, Austrian Economics, and Robin Hanson's signaling theory.
@@ -1330,7 +1514,7 @@ CRITICAL INSTRUCTIONS:
 
 Be analytical, specific, and intellectually honest. The best analysis makes the reader see something familiar in a completely new way.`;
 
-const IDEAS_SYSTEM = `You are a reasoning engine that applies five analytical frameworks: Pete Leeson's institutional methodology, Austrian Economics, Robin Hanson's signaling theory, Nassim Taleb's antifragility framework, and Jiang Xueqin's Predictive History (civilizational cycles and game-theoretic trap analysis).
+const IDEAS_SYSTEM = `You are a reasoning engine that applies six analytical frameworks: Pete Leeson's institutional methodology, Austrian Economics, Robin Hanson's signaling theory, Nassim Taleb's antifragility framework, Jiang Xueqin's Predictive History (civilizational cycles and game-theoretic traps), and Ray Dalio's Principles framework (economic machines, debt cycles, paradigm shifts).
 
 ${LEESON_PROFILE}
 
@@ -1470,6 +1654,8 @@ runBtn.addEventListener('click', async () => {
   showError(false);
   outputSection.classList.remove('visible');
   infographicSection.classList.remove('visible');
+  document.getElementById('contentSection').classList.remove('visible');
+  document.getElementById('contentGenBtn').style.display = 'none';
   infographicLoading.classList.remove('visible');
 
   try {
@@ -1510,6 +1696,12 @@ async function runAnalysis(topic, apiKey) {
   outputSection.classList.add('visible');
 
   outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Store for content generation
+  lastAnalysisTopic = topic;
+  lastAnalysisText = response;
+  document.getElementById('contentGenBtn').style.display = 'inline-block';
+  document.getElementById('contentSection').classList.remove('visible');
 
   // Fire infographic generation async — doesn't block analysis display
   if (currentDepth !== 'quick') {
@@ -1841,7 +2033,7 @@ function renderComparisonTable(data) {
 
 // ── LENS TOGGLES ─────────────────────────────────────────────────────────
 
-const activeLenses = new Set(['leeson', 'austrian', 'hanson', 'taleb', 'jiang']);
+const activeLenses = new Set(['leeson', 'austrian', 'hanson', 'taleb', 'jiang', 'dalio']);
 
 document.querySelectorAll('.lens-pill[data-lens]').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -1892,6 +2084,12 @@ function buildSystemPrompt() {
     sections.push(`## The Jiang Lens: Civilizational Phase and the Trap Structure
 (What phase of the cycle is this? What is the historical structural analogue? Where do rational actor interests converge on a trap? What narrative vacuum is at play?)`);
     lensNames.push('Jiang Xueqin');
+  }
+  if (activeLenses.has('dalio')) {
+    profiles.push(DALIO_PROFILE);
+    sections.push(`## The Dalio Machine: Cycle Position and Template
+(What is the machine here? Where in the cycle — short or long? What is the historical template? What are the policy levers and their constraints? Beautiful or ugly resolution?)`);
+    lensNames.push('Ray Dalio');
   }
 
   const profileBlock = profiles.join('\n\n');
