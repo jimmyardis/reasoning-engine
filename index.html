@@ -7,155 +7,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js">
-// ── CONTENT GENERATOR ────────────────────────────────────────────────────
-
-const CONTENT_SYSTEM = `You are a sharp content strategist who distills dense intellectual analysis into punchy, shareable short-form content. Find the single most surprising, counterintuitive insight and make it irresistible. Never use: "delve into", "game-changer", "paradigm shift", "unpack", "in today's world". No hashtags.`;
-
-let lastAnalysisTopic = '';
-let lastAnalysisText = '';
-let activeContentFormat = 'linkedin';
-
-const contentGenBtn = document.getElementById('contentGenBtn');
-const contentSection = document.getElementById('contentSection');
-const contentLoading = document.getElementById('contentLoading');
-const contentPanels = document.getElementById('contentPanels');
-const contentActions = document.getElementById('contentActions');
-const contentCopyBtn = document.getElementById('contentCopyBtn');
-
-// Tab switching
-document.querySelectorAll('.content-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    activeContentFormat = tab.dataset.format;
-    document.querySelectorAll('.content-tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    document.querySelectorAll('.content-panel').forEach(p => p.classList.remove('active'));
-    document.getElementById('panel-' + activeContentFormat).classList.add('active');
-  });
-});
-
-contentCopyBtn.addEventListener('click', () => {
-  const text = document.getElementById('panel-' + activeContentFormat).innerText;
-  navigator.clipboard.writeText(text).then(() => {
-    contentCopyBtn.textContent = 'Copied!';
-    setTimeout(() => contentCopyBtn.textContent = 'Copy', 2000);
-  });
-});
-
-contentGenBtn.addEventListener('click', async () => {
-  if (!lastAnalysisText) return;
-  contentSection.classList.add('visible');
-  contentSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  contentLoading.style.display = 'block';
-  contentPanels.style.display = 'none';
-  contentActions.style.display = 'none';
-  ['linkedin','thread','hook'].forEach(f => { document.getElementById('panel-' + f).innerHTML = ''; });
-
-  const [li, th, hk] = await Promise.all([
-    genFormat(lastAnalysisTopic, lastAnalysisText, 'linkedin'),
-    genFormat(lastAnalysisTopic, lastAnalysisText, 'thread'),
-    genFormat(lastAnalysisTopic, lastAnalysisText, 'hook'),
-  ]);
-
-  renderLinkedIn(li);
-  renderThread(th);
-  renderHook(hk);
-
-  contentLoading.style.display = 'none';
-  contentPanels.style.display = 'block';
-  contentActions.style.display = 'block';
-});
-
-async function genFormat(topic, analysis, format) {
-  const excerpt = analysis.slice(0, 3000);
-  const prompts = {
-    linkedin: `Write a LinkedIn post (250-350 words) based on this analysis of "${topic}".
-
-Structure:
-- Opening line that stops the scroll — bold counterintuitive claim (not "I've been thinking about...")
-- 2-3 short paragraphs unpacking the insight with one concrete example
-- Closing line that reframes how the reader sees something going forward
-
-Tone: intellectually confident, not academic. Like a smart friend who read something fascinating.
-
-ANALYSIS:
-${excerpt}`,
-    thread: `Write an X/Twitter thread of 5-7 tweets based on this analysis of "${topic}".
-
-Format each tweet exactly as:
-[N/total] Tweet text
-
-Rules: Tweet 1 is the hook — bold claim. Each tweet standalone but pulls to next. Max 270 chars each. Last tweet = sharpest insight.
-
-ANALYSIS:
-${excerpt}`,
-    hook: `Write a newsletter hook based on this analysis of "${topic}".
-
-Format with these exact labeled sections:
-HOOK: (2-3 sentences that create tension or reveal something surprising)
-BRIDGE: (2-3 sentences connecting the hook to why it matters now)
-TEASE: (1 sentence on what they'll understand by the end)
-
-ANALYSIS:
-${excerpt}`,
-  };
-  try {
-    return await callClaude(null, CONTENT_SYSTEM, prompts[format], 1000);
-  } catch(e) {
-    return 'Error generating content.';
-  }
+// Init content generator after DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initContentGenerator);
+} else {
+  initContentGenerator();
 }
-
-function renderLinkedIn(text) {
-  const el = document.createElement('div');
-  el.style.whiteSpace = 'pre-wrap';
-  el.textContent = text;
-  document.getElementById('panel-linkedin').appendChild(el);
-}
-
-function renderThread(text) {
-  const panel = document.getElementById('panel-thread');
-  const lines = text.split('\n').filter(l => l.trim());
-  let tweet = null;
-  lines.forEach(line => {
-    if (/^\[\d+\/\d+\]/.test(line.trim())) {
-      tweet = document.createElement('div');
-      tweet.className = 'thread-tweet';
-      const num = document.createElement('div');
-      num.className = 'tweet-num';
-      num.textContent = 'Tweet ' + (line.match(/\d+/) || [''])[0];
-      const txt = document.createElement('div');
-      txt.textContent = line.replace(/^\[\d+\/\d+\]\s*/, '').trim();
-      tweet.appendChild(num);
-      tweet.appendChild(txt);
-      panel.appendChild(tweet);
-    } else if (tweet && line.trim()) {
-      tweet.querySelector('div:last-child').textContent += ' ' + line.trim();
-    }
-  });
-  if (!panel.children.length) { panel.style.whiteSpace = 'pre-wrap'; panel.textContent = text; }
-}
-
-function renderHook(text) {
-  const panel = document.getElementById('panel-hook');
-  const parts = [['HOOK','hook-text'],['BRIDGE','hook-preview'],['TEASE','hook-preview']];
-  let found = false;
-  parts.forEach(([key, cls]) => {
-    const m = text.match(new RegExp(key + '[:\s]+([\s\S]*?)(?=BRIDGE:|TEASE:|$)', 'i'));
-    if (m && m[1].trim()) {
-      found = true;
-      const lbl = document.createElement('div');
-      lbl.className = 'hook-label';
-      lbl.textContent = key.charAt(0) + key.slice(1).toLowerCase();
-      const txt = document.createElement('div');
-      txt.className = cls;
-      txt.textContent = m[1].trim();
-      panel.appendChild(lbl);
-      panel.appendChild(txt);
-    }
-  });
-  if (!found) { panel.style.whiteSpace = 'pre-wrap'; panel.textContent = text; }
-}
-
+</script>
 </script>
 <style>
   :root {
@@ -1231,6 +1089,7 @@ function renderHook(text) {
       </div>
       <button class="copy-btn" id="copyBtn">Copy</button>
       <button class="save-btn" id="saveBtn">Save .md</button>
+      <button class="content-gen-btn" id="contentGenBtn" style="display:none;">Generate Content ↓</button>
     </div>
     <div class="analysis-body" id="analysisBody"></div>
   </div>
@@ -1248,6 +1107,33 @@ function renderHook(text) {
     <div id="infographicBody"></div>
   </div>
 
+
+  <!-- ── CONTENT GENERATOR ── -->
+  <div class="content-section" id="contentSection">
+    <div class="content-header">
+      <div class="content-header-left">
+        <span class="content-label">Content</span>
+        <span class="content-sublabel">Short-form from this analysis</span>
+      </div>
+      <div class="content-format-tabs">
+        <button class="content-tab active" data-format="linkedin">LinkedIn</button>
+        <button class="content-tab" data-format="thread">X Thread</button>
+        <button class="content-tab" data-format="hook">Newsletter Hook</button>
+      </div>
+    </div>
+    <div class="content-loading" id="contentLoading" style="display:none;">
+      <span class="content-loading-text">Distilling…</span>
+    </div>
+    <div id="contentPanels">
+      <div class="content-panel active" id="panel-linkedin"></div>
+      <div class="content-panel" id="panel-thread"></div>
+      <div class="content-panel" id="panel-hook"></div>
+    </div>
+    <div class="content-actions" id="contentActions" style="display:none;">
+      <button class="content-copy-btn" id="contentCopyBtn">Copy</button>
+    </div>
+  </div>
+
   <!-- ── FOOTER ── -->
   <footer>
     <span class="footer-mark">The Reasoning Engine</span>
@@ -1257,6 +1143,165 @@ function renderHook(text) {
 </div>
 
 <script>
+// ── CONTENT GENERATOR ────────────────────────────────────────────────────
+
+const CONTENT_SYSTEM = `You are a sharp content strategist who distills dense intellectual analysis into punchy, shareable short-form content. Find the single most surprising, counterintuitive insight and make it irresistible. Never use: "delve into", "game-changer", "paradigm shift", "unpack", "in today's world". No hashtags.`;
+
+let lastAnalysisTopic = '';
+let lastAnalysisText = '';
+let activeContentFormat = 'linkedin';
+
+// Content elements (resolved after DOM ready)
+let contentGenBtn, contentSection, contentLoading, contentPanels, contentActions, contentCopyBtn;
+
+function initContentGenerator() {
+  contentGenBtn = document.getElementById('contentGenBtn');
+  contentSection = document.getElementById('contentSection');
+  contentLoading = document.getElementById('contentLoading');
+  contentPanels = document.getElementById('contentPanels');
+  contentActions = document.getElementById('contentActions');
+  contentCopyBtn = document.getElementById('contentCopyBtn');
+
+  if (!contentGenBtn) return; // elements not in DOM yet
+
+// Tab switching
+document.querySelectorAll('.content-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    activeContentFormat = tab.dataset.format;
+    document.querySelectorAll('.content-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.content-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + activeContentFormat).classList.add('active');
+  });
+});
+
+contentCopyBtn.addEventListener('click', () => {
+  const text = document.getElementById('panel-' + activeContentFormat).innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    contentCopyBtn.textContent = 'Copied!';
+    setTimeout(() => contentCopyBtn.textContent = 'Copy', 2000);
+  });
+});
+
+contentGenBtn.addEventListener('click', async () => {
+  if (!lastAnalysisText) return;
+  contentSection.classList.add('visible');
+  contentSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  contentLoading.style.display = 'block';
+  contentPanels.style.display = 'none';
+  contentActions.style.display = 'none';
+  ['linkedin','thread','hook'].forEach(f => { document.getElementById('panel-' + f).innerHTML = ''; });
+
+  const [li, th, hk] = await Promise.all([
+    genFormat(lastAnalysisTopic, lastAnalysisText, 'linkedin'),
+    genFormat(lastAnalysisTopic, lastAnalysisText, 'thread'),
+    genFormat(lastAnalysisTopic, lastAnalysisText, 'hook'),
+  ]);
+
+  renderLinkedIn(li);
+  renderThread(th);
+  renderHook(hk);
+
+  contentLoading.style.display = 'none';
+  contentPanels.style.display = 'block';
+  contentActions.style.display = 'block';
+});
+
+} // end initContentGenerator
+
+async function genFormat(topic, analysis, format) {
+  const excerpt = analysis.slice(0, 3000);
+  const prompts = {
+    linkedin: `Write a LinkedIn post (250-350 words) based on this analysis of "${topic}".
+
+Structure:
+- Opening line that stops the scroll — bold counterintuitive claim (not "I've been thinking about...")
+- 2-3 short paragraphs unpacking the insight with one concrete example
+- Closing line that reframes how the reader sees something going forward
+
+Tone: intellectually confident, not academic. Like a smart friend who read something fascinating.
+
+ANALYSIS:
+${excerpt}`,
+    thread: `Write an X/Twitter thread of 5-7 tweets based on this analysis of "${topic}".
+
+Format each tweet exactly as:
+[N/total] Tweet text
+
+Rules: Tweet 1 is the hook — bold claim. Each tweet standalone but pulls to next. Max 270 chars each. Last tweet = sharpest insight.
+
+ANALYSIS:
+${excerpt}`,
+    hook: `Write a newsletter hook based on this analysis of "${topic}".
+
+Format with these exact labeled sections:
+HOOK: (2-3 sentences that create tension or reveal something surprising)
+BRIDGE: (2-3 sentences connecting the hook to why it matters now)
+TEASE: (1 sentence on what they'll understand by the end)
+
+ANALYSIS:
+${excerpt}`,
+  };
+  try {
+    return await callClaude(null, CONTENT_SYSTEM, prompts[format], 1000);
+  } catch(e) {
+    return 'Error generating content.';
+  }
+}
+
+function renderLinkedIn(text) {
+  const el = document.createElement('div');
+  el.style.whiteSpace = 'pre-wrap';
+  el.textContent = text;
+  document.getElementById('panel-linkedin').appendChild(el);
+}
+
+function renderThread(text) {
+  const panel = document.getElementById('panel-thread');
+  const lines = text.split('\n').filter(l => l.trim());
+  let tweet = null;
+  lines.forEach(line => {
+    if (/^\[\d+\/\d+\]/.test(line.trim())) {
+      tweet = document.createElement('div');
+      tweet.className = 'thread-tweet';
+      const num = document.createElement('div');
+      num.className = 'tweet-num';
+      num.textContent = 'Tweet ' + (line.match(/\d+/) || [''])[0];
+      const txt = document.createElement('div');
+      txt.textContent = line.replace(/^\[\d+\/\d+\]\s*/, '').trim();
+      tweet.appendChild(num);
+      tweet.appendChild(txt);
+      panel.appendChild(tweet);
+    } else if (tweet && line.trim()) {
+      tweet.querySelector('div:last-child').textContent += ' ' + line.trim();
+    }
+  });
+  if (!panel.children.length) { panel.style.whiteSpace = 'pre-wrap'; panel.textContent = text; }
+}
+
+function renderHook(text) {
+  const panel = document.getElementById('panel-hook');
+  const parts = [['HOOK','hook-text'],['BRIDGE','hook-preview'],['TEASE','hook-preview']];
+  let found = false;
+  parts.forEach(([key, cls]) => {
+    const m = text.match(new RegExp(key + '[:\s]+([\s\S]*?)(?=BRIDGE:|TEASE:|$)', 'i'));
+    if (m && m[1].trim()) {
+      found = true;
+      const lbl = document.createElement('div');
+      lbl.className = 'hook-label';
+      lbl.textContent = key.charAt(0) + key.slice(1).toLowerCase();
+      const txt = document.createElement('div');
+      txt.className = cls;
+      txt.textContent = m[1].trim();
+      panel.appendChild(lbl);
+      panel.appendChild(txt);
+    }
+  });
+  if (!found) { panel.style.whiteSpace = 'pre-wrap'; panel.textContent = text; }
+}
+
+
+
 // ── PRINCIPLES PROFILES ───────────────────────────────────────────────────
 
 const LEESON_PROFILE = `
